@@ -11,10 +11,10 @@ namespace Application
         {  
             _fakeDatabas = fakeDatabas; 
         }
-        public static Book AddNewBook()
+        public Book AddNewBook()
         {
             Book newbooktoadd = new Book(1, "Branislav", "Book of Branislav");
-            return newbooktoadd;
+            return _fakeDatabas.AddNewBook(newbooktoadd);
         }
     }
 }
