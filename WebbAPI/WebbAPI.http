@@ -1,0 +1,6 @@
+@WebbAPI_HostAddress = http://localhost:5258
+
+GET {{WebbAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
