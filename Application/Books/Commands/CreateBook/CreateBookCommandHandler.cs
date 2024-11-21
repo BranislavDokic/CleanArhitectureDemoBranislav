@@ -19,8 +19,8 @@ namespace Application.Books.Commands.CreateBook
 
         public Task<List<Book>> Handle(CreateBookCommand request, CancellationToken cancellationToken)
         {
-            
-            _fakeDatabas.Add(request.NewBook);
+            var existingauthor = _fakeDatabas.Authors.Where(author => author.Id == request.NewBook.Author.Id);
+           
             return Task.FromResult(_fakeDatabas.Books);
         }
     }
