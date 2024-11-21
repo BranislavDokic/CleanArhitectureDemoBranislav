@@ -2,6 +2,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Application.Books.Commands.CreateBook;
+using Application.Books.Commands.DeleteBook;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -57,8 +58,16 @@ namespace WebAPI.Controllers
 
         // DELETE api/<BookController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
+            var result = await _mediatr.Send(new DeleteBookCommand(id));
+
+            if (!result)
+            {
+                return NotFound($"No book found with ID {id}");
+            }
+
+            return Ok($"Book with ID {id} was successfully deleted.");
         }
     }
 }
