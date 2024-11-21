@@ -9,6 +9,7 @@ namespace Infrastructure.Database
 {
     public class FakeDatabas
     {
+        
         public List<Book> Books { get; private set; }
         public List<Author> Authors { get; private set; }
 

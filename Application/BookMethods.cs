@@ -1,45 +1,24 @@
-﻿using Domain;
+﻿using Application.Books.Commands.CreateBook;
+using Domain;
 using Infrastructure.Database;
+using MediatR;
 
 namespace Application
 {
     public class BookMethods
     {
-        private readonly FakeDatabas _fakeDatabas;
+        private readonly IMediator _mediator;
 
-        public BookMethods(FakeDatabas fakeDatabas) 
-        {  
-            _fakeDatabas = fakeDatabas; 
-        }
-        public Book AddNewBook()
+        public BookMethods(IMediator mediator)
         {
-            Book newbooktoadd = new Book(1, "Branislav", "Book of Branislav");
-            return _fakeDatabas.AddNewBook(newbooktoadd);
+            _mediator = mediator;
         }
 
-        public Book AddNewBook(Book newBook)
+        public async Task AddBook(Book book)
         {
-            return _fakeDatabas.AddNewBook(newBook);
+            await _mediator.Send(new CreateBookCommand(book));
         }
 
-        public Book? GetBookById(int id)
-        {
-            return _fakeDatabas.GetBookById(id);
-        }
 
-        public List<Book> GetAllBooks()
-        {
-            return _fakeDatabas.GetAllBooks();
-        }
-
-        public bool UpdateBook(Book updatedBook)
-        {
-            return _fakeDatabas.UpdateBook(updatedBook);
-        }
-
-        public bool DeleteBook(int id)
-        {
-            return _fakeDatabas.DeleteBook(id);
-        }
     }
 }
