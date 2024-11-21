@@ -33,30 +33,9 @@ namespace Infrastructure.Database
         }
 
         
-        public void Add(Book newBook)
-        {
-           
-            var existingAuthor = Authors.FirstOrDefault(a => a.Id == newBook.Author.Id);
-            if (existingAuthor == null)
-            {
-               
-                AddAuthor(newBook.Author);
-            }
-            else
-            {
-                
-                newBook.Author = existingAuthor;
-            }
-
-           
-            Books.Add(newBook);
-        }
+        
 
         
-        public void AddAuthor(Author author)
-        {
-            
-            Authors.Add(author);
-        }
+      
     }
 }
