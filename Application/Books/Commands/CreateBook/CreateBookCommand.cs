@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Application.Books.Commands.CreateBook
 {
-    internal class CreateBookCommand : IRequest<List<Book>>
+    public class CreateBookCommand : IRequest<List<Book>>
     {
         public CreateBookCommand(Book bookToAdd) 
         {

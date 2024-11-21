@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Application.Books.Commands.CreateBook
 {
-    internal class CreateBookCommandHandler
+    public class CreateBookCommandHandler
     {
         private readonly FakeDatabas _fakeDatabas;
 
