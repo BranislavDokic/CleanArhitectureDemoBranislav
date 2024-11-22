@@ -5,6 +5,7 @@ using Application.Books.Commands.CreateBook;
 using Application.Books.Commands.DeleteBook;
 using Application.Books.Commands.UpdateBook;
 using Application.Dtos;
+using Application.Books.Queries.GetAllBook;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -25,9 +26,11 @@ namespace WebAPI.Controllers
 
         // GET: api/<BookController>
         [HttpGet]
-        public IEnumerable<string> Get()
+        public async Task<IActionResult> GetAllBooks()
         {
-            return new string[] { "value1", "value2" };
+            var query = new GetAllBooksQuery();
+            var books = await _mediatr.Send(query); 
+            return Ok(books); 
         }
 
         // GET api/<BookController>/5

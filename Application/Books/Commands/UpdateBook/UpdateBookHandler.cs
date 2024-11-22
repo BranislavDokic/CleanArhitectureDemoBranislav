@@ -22,18 +22,18 @@ namespace Application.Books.Commands.UpdateBook
 
         public Task<Book> Handle(UpdateBookCommand request, CancellationToken cancellationToken)
         {
-            // Hitta boken som ska uppdateras
+           
             var bookToUpdate = _database.Books.FirstOrDefault(b => b.Id == request.BookId);
             if (bookToUpdate == null)
             {
                 throw new Exception($"Book with ID {request.BookId} not found.");
             }
 
-            // Uppdatera bokens egenskaper
+            
             bookToUpdate.Title = request.UpdatedBook.Title;
             bookToUpdate.Description = request.UpdatedBook.Description;
 
-            // Validera om författaren existerar
+            
             var author = _database.Authors.FirstOrDefault(a => a.Id == request.UpdatedBook.AuthorId);
             if (author == null)
             {
