@@ -3,6 +3,8 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Application.Books.Commands.CreateBook;
 using Application.Books.Commands.DeleteBook;
+using Application.Books.Commands.UpdateBook;
+using Application.Dtos;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -52,8 +54,22 @@ namespace WebAPI.Controllers
 
         // PUT api/<BookController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public async Task<IActionResult> UpdateBook(int id, [FromBody] BookDTO updatedBook)
         {
+            if (updatedBook == null)
+            {
+                return BadRequest("Invalid book data.");
+            }
+
+            try
+            {
+                var result = await _mediatr.Send(new UpdateBookCommand(id, updatedBook));
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         // DELETE api/<BookController>/5
