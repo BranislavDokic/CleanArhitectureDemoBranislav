@@ -6,6 +6,7 @@ using Application.Books.Commands.DeleteBook;
 using Application.Books.Commands.UpdateBook;
 using Application.Dtos;
 using Application.Books.Queries.GetAllBook;
+using Microsoft.AspNetCore.Authorization;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -25,6 +26,7 @@ namespace WebAPI.Controllers
 
 
         // GET: api/<BookController>
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAllBooks()
         {
