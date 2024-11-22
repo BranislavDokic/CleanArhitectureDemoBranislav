@@ -1,4 +1,5 @@
 ﻿using Application.Books.Commands.CreateBook;
+using Application.Users.UserQueris.UserLogin.Helpers;
 using Domain;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,10 +15,10 @@ namespace Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
+            services.AddScoped<TokenHelper>();
+
             var assembly = typeof(DependencyInjection).Assembly;
             services.AddMediatR(configuration => configuration.RegisterServicesFromAssembly(assembly));
-
-            
 
             return services;
         }

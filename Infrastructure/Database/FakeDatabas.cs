@@ -32,10 +32,22 @@ namespace Infrastructure.Database
             };
         }
 
-        
-        
+        public List<User> Users
+        {
+            get { return allUsers; }
+            set { allUsers = value; }
 
-        
-      
+        }
+
+        private static List<User> allUsers = new()
+        {
+            new User {Id = Guid.NewGuid(), UserName = "Branislav"},
+            new User {Id = Guid.NewGuid(),UserName = "Branko" },
+            new User {Id = Guid.NewGuid(), UserName = "Milutin" },
+            new User {Id = new Guid("123e4567-e89b-12d3-a456-426614174000"), UserName = "TestUserForUnitTestning" }
+
+
+
+        };
     }
 }
