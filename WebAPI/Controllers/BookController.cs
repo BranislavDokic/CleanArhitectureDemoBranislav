@@ -7,6 +7,7 @@ using Application.Books.Commands.UpdateBook;
 using Application.Dtos;
 using Application.Books.Queries.GetAllBook;
 using Microsoft.AspNetCore.Authorization;
+using Application.Books.Queries.GetBookById;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -36,13 +37,24 @@ namespace WebAPI.Controllers
         }
 
         // GET api/<BookController>/5
+        [Authorize]
         [HttpGet("{id}")]
-        public string Get(int id)
+        public async Task<IActionResult> GetBookById(int id)
         {
-            return "value";
+            try
+            {
+                var query = new GetBookByIdQuery(id);
+                var book = await _mediatr.Send(query);
+                return Ok(book);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         // POST api/<BookController>
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Book bookToAdd)
         {
@@ -58,6 +70,7 @@ namespace WebAPI.Controllers
         }
 
         // PUT api/<BookController>/5
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateBook(int id, [FromBody] BookDTO updatedBook)
         {
@@ -78,6 +91,7 @@ namespace WebAPI.Controllers
         }
 
         // DELETE api/<BookController>/5
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

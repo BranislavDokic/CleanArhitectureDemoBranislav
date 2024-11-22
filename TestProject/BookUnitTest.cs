@@ -1,88 +1,118 @@
-using Application;
+﻿using Application;
+using Application.Books.Commands.CreateBook;
+using Application.Books.Commands.DeleteBook;
+using Application.Books.Commands.UpdateBook;
+using Application.Books.Queries.GetAllBook;
+using Application.Books.Queries.GetBookById;
+using Application.Dtos;
 using Domain;
 using Infrastructure.Database;
+using MediatR;
+using Moq;
+using WebAPI.Controllers;
 
 namespace TestProject
 {
     public class Tests
     {
         private FakeDatabas _fakeDatabase;
-        private BookMethods _bookMethods;
+        private IMediator _mediator;
         [SetUp]
         public void Setup()
         {
             _fakeDatabase = new FakeDatabas();
-            _bookMethods = new BookMethods(_fakeDatabase);
+            var mediatorMock = new Mock<IMediator>();
+            _mediator = mediatorMock.Object;
+        }
+
+
+        [Test]
+        public async Task Handle_ShouldReturnAllBooks()
+        {
+           
+            var fakeDatabase = new FakeDatabas();
+            fakeDatabase.Books.Clear();
+            fakeDatabase.Books.AddRange(new List<Book>
+            {
+                new Book(1, "Book One", "Description One", fakeDatabase.Authors.First()), 
+                new Book(2, "Book Two", "Description Two", fakeDatabase.Authors.Skip(1).First())  
+            });
+
+            var handler = new GetAllBooksQueryHandler(fakeDatabase);
+            var query = new GetAllBooksQuery();
+
+            var result = await handler.Handle(query, CancellationToken.None);
+
+            Assert.IsNotNull(result, "Result should not be null.");
+            Assert.AreEqual(2, result.Count, "The result should contain 2 books.");
+            Assert.IsTrue(result.Any(b => b.Title == "Book One"), "The result should contain a book with the title 'Book One'.");
+            Assert.IsTrue(result.Any(b => b.Title == "Book Two"), "The result should contain a book with the title 'Book Two'.");
         }
 
         [Test]
-        public void When_Method_AddNewBook_IsCaled_ThenBookAddedToList()
+        public async Task Handle_ShouldAddNewBook_WhenAuthorExists()
         {
-            Book expectedBook = new Book(1, "Branislav", "Book of Branislav");
+            var fakeDatabase = new FakeDatabas();
 
-            Book actualBook = _bookMethods.AddNewBook();
+           
+            var author = fakeDatabase.Authors.First(a => a.Id == 1);
 
+            var newBook = new Book(15, "New Book", "Description of the new book", author);
+            var command = new CreateBookCommand(newBook);
+            var handler = new CreateBookCommandHandler(fakeDatabase);
+
+
+            var result = await handler.Handle(command, CancellationToken.None);
+
+            Assert.IsNotNull(result, "Result should not be null.");
+            Assert.AreEqual(6, result.Count, "Database should contain six books.");  
+            var addedBook = result.FirstOrDefault(b => b.Title == "New Book");
+            Assert.IsNotNull(addedBook, "New book should have been added to the database.");
+            Assert.AreEqual("New Book", addedBook.Title, "Book title should match.");
+            Assert.AreEqual(author.Id, addedBook.Author.Id, "Book author ID should match.");
+            Assert.AreEqual(author.Name, addedBook.Author.Name, "Book author name should match.");
+        }
+
+        [Test]
+        public async Task Handle_ShouldReturnTrue_WhenBookExists()
+        {
+
+            var fakeDatabase = new FakeDatabas();
+            var bookToRemove = fakeDatabase.Books.First(b => b.Id == 1); 
+            var handler = new DeleteBookCommandHandler(fakeDatabase);
+            var command = new DeleteBookCommand(bookToRemove.Id);
+
+            var result = await handler.Handle(command, CancellationToken.None);
+
+            Assert.IsTrue(result, "Handler should return true when the book exists.");
+            Assert.That(fakeDatabase.Books, Does.Not.Contain(bookToRemove), "Book should be removed from the database.");
+        }
+
+        [Test]
+        public void UpdateBook_ShouldModifyBookDetails()
+        {
             
-            Assert.That(actualBook.Description, Is.EqualTo(expectedBook.Description));
+            var fakeDatabase = new FakeDatabas();
+
+            var originalBook = new Book(6, "Original Title", "Original Description", new Author(99, "Original Author", "Original Biography"));
+            fakeDatabase.Books.Add(originalBook);
+
+            var updatedBookDto = new BookDTO
+            {
+                Title = "Updated Title",
+                Description = "Updated Description",
+                AuthorId = 1 
+            };
+
+            var handler = new UpdateBookCommandHandler(fakeDatabase);
+            var updateCommand = new UpdateBookCommand(6, updatedBookDto);
+
+            var result = handler.Handle(updateCommand, default).Result;
+
+            Assert.That(result.Title, Is.EqualTo("Updated Title"));
+            Assert.That(result.Description, Is.EqualTo("Updated Description"));
+            Assert.That(result.Author.Name, Is.EqualTo("Author One")); 
         }
-
-        [Test]
-        public void AddNewBook_ShouldAddBookToList()
-        {
-            var newBook = new Book(6, "NewBook", "NewDescription");
-            var addedBook = _bookMethods.AddNewBook(newBook);
-
-            Assert.That(addedBook.Title, Is.EqualTo("NewBook"));
-        }
-
-        [Test]
-        public void GetBookById_ShouldReturnCorrectBook()
-        {
-            var book = _bookMethods.GetBookById(1);
-
-            Assert.That(book?.Title, Is.EqualTo("BranislavBook1"));
-        }
-
-        [Test]
-        public void GetAllBooks_ShouldReturnAllBooks()
-        {
-            var books = _bookMethods.GetAllBooks();
-
-            Assert.That(books.Count, Is.GreaterThanOrEqualTo(5));
-        }
-
-        [Test]
-        public void UpdateBook_ShouldModifyBook()
-        {
-           
-            var originalBook = new Book(1, "Original Title", "Original Description");
-            _bookMethods.AddNewBook(originalBook);
-
-           
-            var updatedBook = new Book(1, "Updated Title", "Updated Description");
-            var result = _bookMethods.UpdateBook(updatedBook);
-
-           
-            Assert.That(result, Is.True);
-
-            
-            var book = _bookMethods.GetBookById(1);
-            Assert.That(book, Is.Not.Null);
-            Assert.That(book.Title, Is.EqualTo("Updated Title"));
-            Assert.That(book.Description, Is.EqualTo("Updated Description"));
-        }
-
-        [Test]
-        public void DeleteBook_ShouldRemoveBook()
-        {
-            var result = _bookMethods.DeleteBook(1);
-
-            Assert.IsTrue(result);
-
-            var book = _bookMethods.GetBookById(1);
-            Assert.IsNull(book);
-        }
-
 
     }
 }
