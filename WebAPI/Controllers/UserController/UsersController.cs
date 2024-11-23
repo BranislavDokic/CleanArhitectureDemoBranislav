@@ -43,7 +43,21 @@ namespace WebAPI.Controllers.UserController
         [Route("Register")]
         public async Task<IActionResult> Register([FromBody] UserDTO userToAdd)
         {
-            return Ok(await _mediatr.Send(new AddNewUserCommand(userToAdd)));
+            try
+            {
+                if (string.IsNullOrWhiteSpace(userToAdd?.UserName) || string.IsNullOrWhiteSpace(userToAdd?.Password))
+                {
+                    return BadRequest("UserName and Password cannot be empty or whitespace.");
+                }
+
+                var result = await _mediatr.Send(new AddNewUserCommand(userToAdd));
+
+                return Ok(new { Message = "User has been successfully added to the list.", User = result });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An unexpected error occurred.", Details = ex.Message });
+            }
         }
 
         [HttpPost]

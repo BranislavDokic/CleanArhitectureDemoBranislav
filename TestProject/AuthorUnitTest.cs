@@ -108,4 +108,15 @@ public class AuthorUnitTest
         Assert.That(result.Name, Is.EqualTo("Author 4"));
         Assert.That(result.Biography, Is.EqualTo("Biography 4"));
     }
+
+    [Test]
+    public async Task GetAuthorById_ShouldThrowKeyNotFoundException_WhenAuthorDoesNotExist()
+    {
+        var nonExistentAuthorId = 999;
+        var getAuthorByIdQuery = new GetAuthorByIdQuery(nonExistentAuthorId);
+        var handler = new GetAuthorByIdQueryHandler(_fakeDatabase);
+        var ex = Assert.ThrowsAsync<KeyNotFoundException>(() => handler.Handle(getAuthorByIdQuery, default));
+
+        Assert.That(ex.Message, Is.EqualTo($"Author with ID {nonExistentAuthorId} was not found."));
+    }
 }

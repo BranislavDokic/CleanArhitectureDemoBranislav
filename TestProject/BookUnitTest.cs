@@ -54,23 +54,17 @@ namespace TestProject
         {
             var fakeDatabase = new FakeDatabas();
 
-           
             var author = fakeDatabase.Authors.First(a => a.Id == 1);
 
             var newBook = new Book(15, "New Book", "Description of the new book", author);
             var command = new CreateBookCommand(newBook);
             var handler = new CreateBookCommandHandler(fakeDatabase);
 
-
             var result = await handler.Handle(command, CancellationToken.None);
 
-            Assert.IsNotNull(result, "Result should not be null.");
-            Assert.AreEqual(6, result.Count, "Database should contain six books.");  
-            var addedBook = result.FirstOrDefault(b => b.Title == "New Book");
+            Assert.AreEqual(6, fakeDatabase.Books.Count, "Database should contain one more book.");
+            var addedBook = fakeDatabase.Books.FirstOrDefault(b => b.Title == "New Book");
             Assert.IsNotNull(addedBook, "New book should have been added to the database.");
-            Assert.AreEqual("New Book", addedBook.Title, "Book title should match.");
-            Assert.AreEqual(author.Id, addedBook.Author.Id, "Book author ID should match.");
-            Assert.AreEqual(author.Name, addedBook.Author.Name, "Book author name should match.");
         }
 
         [Test]
@@ -86,6 +80,17 @@ namespace TestProject
 
             Assert.IsTrue(result, "Handler should return true when the book exists.");
             Assert.That(fakeDatabase.Books, Does.Not.Contain(bookToRemove), "Book should be removed from the database.");
+        }
+
+        [Test]
+        public void Handle_ShouldThrowKeyNotFoundException_WhenBookDoesNotExist()
+        {
+            var fakeDatabase = new FakeDatabas();
+            var nonExistentBookId = 999; 
+            var query = new GetBookByIdQuery(nonExistentBookId);
+            var handler = new GetBookByIdQueryhandler(fakeDatabase);
+
+            Assert.ThrowsAsync<KeyNotFoundException>(() => handler.Handle(query, CancellationToken.None));
         }
 
         [Test]

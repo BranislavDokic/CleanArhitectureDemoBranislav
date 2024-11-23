@@ -8,6 +8,7 @@ using Application.Dtos;
 using Application.Books.Queries.GetAllBook;
 using Microsoft.AspNetCore.Authorization;
 using Application.Books.Queries.GetBookById;
+using Application.Authors.AuthorCommands.DeleteAuthor;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -59,14 +60,21 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> Post([FromBody] Book bookToAdd)
         {
 
-            if (bookToAdd == null)
+            if (string.IsNullOrWhiteSpace(bookToAdd?.Title) || string.IsNullOrWhiteSpace(bookToAdd?.Author?.Name))
             {
-                return BadRequest("Book data is invalid.");
+                return BadRequest("Title and Author Name cannot be empty or whitespace.");
             }
 
-            await _mediatr.Send(new CreateBookCommand(bookToAdd));
+            try
+            {
+                await _mediatr.Send(new CreateBookCommand(bookToAdd));
 
-            return Ok();
+                return Ok(new { Message = "Book has been successfully added to the list.", Book = bookToAdd });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An unexpected error occurred.", Details = ex.Message });
+            }
         }
 
         // PUT api/<BookController>/5
@@ -95,14 +103,21 @@ namespace WebAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _mediatr.Send(new DeleteBookCommand(id));
-
-            if (!result)
+      
+            try
             {
-                return NotFound($"No book found with ID {id}");
-            }
+                var result = await _mediatr.Send(new DeleteBookCommand(id));
+                if (result)
+                {
+                    return Ok($"Book with ID {id} was successfully deleted.");
+                }
 
-            return Ok($"Book with ID {id} was successfully deleted.");
+                return BadRequest("Book not found");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }
