@@ -57,14 +57,32 @@ namespace WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAuthor([FromBody] AuthorDTO authorToAdd)
         {
-            if (authorToAdd == null)
+            if (string.IsNullOrWhiteSpace(authorToAdd?.Name) || string.IsNullOrWhiteSpace(authorToAdd?.Biography))
             {
-                return BadRequest("Author data is invalid.");
+                return BadRequest("Name and Biography cannot be empty or whitespace.");
             }
 
-            await _mediator.Send(new CreateAuthorCommand(authorToAdd));
+            try
+            {
+                var createdAuthors = await _mediator.Send(new CreateAuthorCommand(authorToAdd));
 
-            return Ok();
+                var newAuthor = createdAuthors.LastOrDefault();
+
+                if (newAuthor == null)
+                {
+                    return StatusCode(500, "Author could not be added due to an unknown error.");
+                }
+
+                return Ok(new { Message = "User has been successfully added to the list.", Author = newAuthor });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An unexpected error occurred.", Details = ex.Message });
+            }
         }
 
 

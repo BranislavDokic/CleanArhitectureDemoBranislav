@@ -20,7 +20,6 @@ namespace Application.Authors.AuthorCommands.CreateAuthor
 
         public Task<List<Author>> Handle(CreateAuthorCommand request, CancellationToken cancellationToken)
         {
-           
             var existingAuthor = _fakeDatabas.Authors.FirstOrDefault(a => a.Name == request.NewAuthor.Name);
             if (existingAuthor != null)
             {
