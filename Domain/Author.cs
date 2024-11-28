@@ -18,5 +18,7 @@ namespace Domain
             Name = name;
             Biography = biography;
         }
+
+        public Author() { }
     }
 }

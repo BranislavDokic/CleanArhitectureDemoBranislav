@@ -13,7 +13,7 @@ namespace Domain
         public string? Title { get; set; }
         public string? Description { get; set; }
 
-        public Author Author { get; set; }
+        public Author Author { get; set; } = null!;
 
 
         public Book(int id, string title, string description, Author author)
@@ -22,6 +22,10 @@ namespace Domain
             Title = title;
             Description = description;
             Author = author;
+        }
+
+        public Book()
+        {
         }
     }
 
