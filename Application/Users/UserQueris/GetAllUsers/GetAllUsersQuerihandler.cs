@@ -1,27 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Application.Interfaces.Repositoryinterfaces;
 using Domain;
-using Infrastructure.Database;
 using MediatR;
 
 namespace Application.Users.UserQueris.GetAllUsers
 {
     internal sealed class GetAllUsersQuerihandler : IRequestHandler<GetAllUsersQueri, List<User>>
     {
-        private readonly FakeDatabas _fakeDatabas;
+        private readonly IGenericRepositoryInterface<User> _userRepository;
 
-        public GetAllUsersQuerihandler(FakeDatabas fakeDatabas)
+        public GetAllUsersQuerihandler(IGenericRepositoryInterface<User> userRepository)
         {
-            _fakeDatabas = fakeDatabas;
+            _userRepository = userRepository;
         }
 
-        public Task<List<User>> Handle(GetAllUsersQueri request, CancellationToken cancellationToken)
+        public async Task<List<User>> Handle(GetAllUsersQueri request, CancellationToken cancellationToken)
         {
-            List<User> allUsersFromFakeDatabas = _fakeDatabas.Users;
-            return Task.FromResult(allUsersFromFakeDatabas);
+            var allUsers = await _userRepository.GetAllAsync();
+            return allUsers;
         }
     }
 }

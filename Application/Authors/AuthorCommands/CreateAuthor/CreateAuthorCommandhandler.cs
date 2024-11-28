@@ -1,41 +1,39 @@
-﻿using Domain;
-using Infrastructure.Database;
+﻿using Application.Interfaces.Repositoryinterfaces;
+using Domain;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Application.Authors.AuthorCommands.CreateAuthor
 {
     public class CreateAuthorCommandHandler : IRequestHandler<CreateAuthorCommand, List<Author>>
     {
-        private readonly FakeDatabas _fakeDatabas;
+        private readonly IGenericRepositoryInterface<Author> _genericRepository;
 
-        public CreateAuthorCommandHandler(FakeDatabas fakeDatabas)
+        public CreateAuthorCommandHandler(IGenericRepositoryInterface<Author> genericRepository)
         {
-            _fakeDatabas = fakeDatabas;
+            _genericRepository = genericRepository;
         }
 
-        public Task<List<Author>> Handle(CreateAuthorCommand request, CancellationToken cancellationToken)
+        public async Task<List<Author>> Handle(CreateAuthorCommand request, CancellationToken cancellationToken)
         {
-            var existingAuthor = _fakeDatabas.Authors.FirstOrDefault(a => a.Name == request.NewAuthor.Name);
-            if (existingAuthor != null)
+            try
             {
-                throw new InvalidOperationException("An author with the same name already exists.");
+                var author = new Author
+                {
+                    Name = request.NewAuthor.Name,
+                    Biography = request.NewAuthor.Biography
+                };
+
+                await _genericRepository.AddAsync(author);
+
+                var allAuthors = await _genericRepository.GetAllAsync();
+
+                return allAuthors;
             }
-
-           
-            var newAuthor = new Author(
-                id: _fakeDatabas.Authors.Count + 1,
-                name: request.NewAuthor.Name,
-                biography: request.NewAuthor.Biography
-            );
-
-           
-            _fakeDatabas.Authors.Add(newAuthor);
-            return Task.FromResult(_fakeDatabas.Authors);
+            catch
+            {
+                throw new Exception("Author not added");
+            }
         }
     }
 }

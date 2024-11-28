@@ -1,33 +1,29 @@
-﻿using Domain;
-using Infrastructure.Database;
+﻿using Application.Interfaces.Repositoryinterfaces;
+using Domain;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Application.Books.Queries.GetBookById
 {
     public class GetBookByIdQueryhandler : IRequestHandler<GetBookByIdQuery, Book>
     {
-        private readonly FakeDatabas _database;
+        private readonly IGenericRepositoryInterface<Book> _bookRepository;
 
-        public GetBookByIdQueryhandler(FakeDatabas database)
+        public GetBookByIdQueryhandler(IGenericRepositoryInterface<Book> bookRepository)
         {
-            _database = database;
+            _bookRepository = bookRepository;
         }
 
-        public Task<Book> Handle(GetBookByIdQuery request, CancellationToken cancellationToken)
+        public async Task<Book> Handle(GetBookByIdQuery request, CancellationToken cancellationToken)
         {
-            var book = _database.Books.FirstOrDefault(b => b.Id == request.Id);
+            var book = await _bookRepository.GetByIdAsync(request.Id);
 
             if (book == null)
             {
                 throw new KeyNotFoundException($"No book found with ID {request.Id}");
             }
 
-            return Task.FromResult(book);
+            return book;
         }
 
     }

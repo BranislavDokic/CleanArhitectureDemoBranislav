@@ -1,4 +1,5 @@
-﻿using Domain;
+﻿using Application.Dtos;
+using Domain;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -10,10 +11,11 @@ namespace Application.Books.Commands.CreateBook
 {
     public class CreateBookCommand : IRequest<List<Book>>
     {
-        public CreateBookCommand(Book bookToAdd) 
+        public BookDTO NewBook { get; set; }
+
+        public CreateBookCommand(BookDTO newBook)
         {
-            NewBook = bookToAdd;
+            NewBook = newBook;
         }
-        public Book NewBook { get; }
     }
 }

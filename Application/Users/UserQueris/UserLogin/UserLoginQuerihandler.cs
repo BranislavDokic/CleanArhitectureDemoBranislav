@@ -1,39 +1,36 @@
-﻿using Application.Users.UserQueris.UserLogin.Helpers;
-using Infrastructure.Database;
+﻿using Application.Interfaces.Repositoryinterfaces;
+using Application.Users.UserQueris.UserLogin.Helpers;
+using Domain;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Users.UserQueris.UserLogin
 {
     public class UserLoginQuerihandler : IRequestHandler<UserLoginQueri, string>
     {
-        private readonly FakeDatabas _fakedatabas;
+        private readonly IGenericRepositoryInterface<User> _userRepository;
         private readonly TokenHelper _tokenHelper;
 
-        public UserLoginQuerihandler(FakeDatabas fakedatabas, TokenHelper tokenHelper)
+        public UserLoginQuerihandler(IGenericRepositoryInterface<User> userRepository, TokenHelper tokenHelper)
         {
-            _fakedatabas = fakedatabas;
+            _userRepository = userRepository;
             _tokenHelper = tokenHelper;
         }
 
 
-        
-        public Task<string> Handle(UserLoginQueri request, CancellationToken cancellationToken)
+
+        public async Task<string> Handle(UserLoginQueri request, CancellationToken cancellationToken)
         {
-            var user = _fakedatabas.Users.FirstOrDefault(user => user.UserName == request.LoginUser.UserName && user.Password == request.LoginUser.Password);
-            if (user == null) 
+            var user = await _userRepository.GetAllAsync();
+            var foundUser = user.FirstOrDefault(u => u.UserName == request.LoginUser.UserName && u.Password == request.LoginUser.Password);
+
+            if (foundUser == null)
             {
                 throw new UnauthorizedAccessException("Invalid username or password");
             }
 
-            string token = _tokenHelper.GeneretJwtToken(user);
+            string token = _tokenHelper.GeneretJwtToken(foundUser);
 
-            return Task.FromResult(token);
-
+            return token;
         }
     }
 }

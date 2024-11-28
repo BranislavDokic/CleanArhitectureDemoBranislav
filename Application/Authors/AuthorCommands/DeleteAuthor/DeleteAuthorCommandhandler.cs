@@ -1,34 +1,34 @@
-﻿using Infrastructure.Database;
+﻿using Application.Interfaces.Repositoryinterfaces;
+using Domain;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Application.Authors.AuthorCommands.DeleteAuthor
 {
     public class DeleteAuthorCommandHandler : IRequestHandler<DeleteAuthorCommand, bool>
     {
-        private readonly FakeDatabas _fakeDatabas;
+        private readonly IGenericRepositoryInterface<Author> _authorRepository;
 
-        public DeleteAuthorCommandHandler(FakeDatabas fakeDatabas)
+        public DeleteAuthorCommandHandler(IGenericRepositoryInterface<Author> authorRepository)
         {
-            _fakeDatabas = fakeDatabas;
+            _authorRepository = authorRepository;
         }
-
-        public Task<bool> Handle(DeleteAuthorCommand request, CancellationToken cancellationToken)
+        public async Task<bool> Handle(DeleteAuthorCommand request, CancellationToken cancellationToken)
         {
-            var authorToDelete = _fakeDatabas.Authors.FirstOrDefault(a => a.Id == request.AuthorId);
-
-            if (authorToDelete == null)
+            try
             {
-                throw new KeyNotFoundException($"Author with ID {request.AuthorId} not found.");
+                var result = await _authorRepository.DeleteAsync(request.AuthorId);
+
+                return result == "Deleted";
             }
-
-            _fakeDatabas.Authors.Remove(authorToDelete);
-
-            return Task.FromResult(true);
+            catch (KeyNotFoundException ex)
+            {
+                throw new KeyNotFoundException($"Author with ID {request.AuthorId} not found.", ex);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An error occurred while deleting the author.", ex);
+            }
         }
     }
 }

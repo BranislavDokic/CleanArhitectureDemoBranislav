@@ -8,6 +8,7 @@ using Application.Dtos;
 using Application.Books.Queries.GetAllBook;
 using Microsoft.AspNetCore.Authorization;
 using Application.Books.Queries.GetBookById;
+using System.Text.Json;
 using Application.Authors.AuthorCommands.DeleteAuthor;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -57,25 +58,32 @@ namespace WebAPI.Controllers
         // POST api/<BookController>
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Book bookToAdd)
+        public async Task<IActionResult> CreateBook([FromBody] BookDTO bookToAdd)
         {
-
-            if (string.IsNullOrWhiteSpace(bookToAdd?.Title) || string.IsNullOrWhiteSpace(bookToAdd?.Author?.Name))
+            if (bookToAdd.AuthorId <= 0)
             {
-                return BadRequest("Title and Author Name cannot be empty or whitespace.");
+                return BadRequest("Invalid AuthorId");
             }
 
             try
             {
-                await _mediatr.Send(new CreateBookCommand(bookToAdd));
+                var createdBooks = await _mediatr.Send(new CreateBookCommand(bookToAdd));
 
-                return Ok(new { Message = "Book has been successfully added to the list.", Book = bookToAdd });
+                var newBook = createdBooks.LastOrDefault();
+
+                if (newBook == null)
+                {
+                    return StatusCode(500, "Book could not be added.");
+                }
+
+                return Ok(new { Message = "Book has been successfully added.", Book = newBook });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { Message = "An unexpected error occurred.", Details = ex.Message });
             }
         }
+
 
         // PUT api/<BookController>/5
         [Authorize]
@@ -103,20 +111,21 @@ namespace WebAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-      
+
             try
             {
                 var result = await _mediatr.Send(new DeleteBookCommand(id));
+
                 if (result)
                 {
                     return Ok($"Book with ID {id} was successfully deleted.");
                 }
 
-                return BadRequest("Book not found");
+                return NotFound($"Book with ID {id} not found.");
             }
-            catch (KeyNotFoundException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
+                return StatusCode(500, new { Message = "An unexpected error occurred.", Details = ex.Message });
             }
         }
     }
