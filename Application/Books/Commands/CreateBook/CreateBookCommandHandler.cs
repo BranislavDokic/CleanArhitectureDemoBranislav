@@ -1,45 +1,51 @@
-﻿using Domain;
-using Infrastructure.Database;
+﻿using Application.Interfaces.Repositoryinterfaces;
+using Domain;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 
 namespace Application.Books.Commands.CreateBook
 {
     public class CreateBookCommandHandler : IRequestHandler<CreateBookCommand, List<Book>>
     {
-        private readonly FakeDatabas _fakeDatabas;
+        private readonly IGenericRepositoryInterface<Book> _bookRepository;
+        private readonly IGenericRepositoryInterface<Author> _authorRepository;
 
-        public CreateBookCommandHandler(FakeDatabas fakeDatabas)
+        public CreateBookCommandHandler(
+            IGenericRepositoryInterface<Book> bookRepository,
+            IGenericRepositoryInterface<Author> authorRepository)
         {
-            _fakeDatabas = fakeDatabas;
+            _bookRepository = bookRepository;
+            _authorRepository = authorRepository;
         }
 
-        public Task<List<Book>> Handle(CreateBookCommand request, CancellationToken cancellationToken)
+        public async Task<List<Book>> Handle(CreateBookCommand request, CancellationToken cancellationToken)
         {
-            
-            var existingAuthor = _fakeDatabas.Authors.FirstOrDefault(a => a.Id == request.NewBook.Author.Id);
-            if (existingAuthor == null)
-            {
-                throw new KeyNotFoundException("Author not found.");
+            try
+            {               
+                var author = await _authorRepository.GetByIdAsync(request.NewBook.AuthorId);
+
+                if (author == null)
+                {
+                    throw new Exception("Author not found");
+                }
+
+               
+                var book = new Book
+                {
+                    Title = request.NewBook.Title,
+                    Description = request.NewBook.Description,
+                    Author = author  
+                };
+
+                await _bookRepository.AddAsync(book);
+
+                var allBooks = await _bookRepository.GetAllAsync();
+                return allBooks;
             }
-
-           
-            var newBook = new Book(
-                id: _fakeDatabas.Books.Count + 1,
-                title: request.NewBook.Title,
-                description: request.NewBook.Description,
-                author: existingAuthor
-            );
-
-            _fakeDatabas.Books.Add(newBook);
-
-            
-            return Task.FromResult(_fakeDatabas.Books);
+            catch (Exception ex)
+            {
+                throw new Exception("Book could not be added", ex);
+            }
         }
     }
 }

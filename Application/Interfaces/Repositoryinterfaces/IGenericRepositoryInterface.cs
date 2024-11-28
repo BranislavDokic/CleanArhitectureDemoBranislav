@@ -1,0 +1,17 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Application.Interfaces.Repositoryinterfaces
+{
+    public interface IGenericRepositoryInterface<T> where T : class
+    {
+        Task<T> AddAsync(T entity);
+        Task<List<T>> GetAllAsync();
+        Task<T> GetByIdAsync(int id);
+        Task<string> DeleteAsync(int id);
+        Task<T> UpdateAsync(int id, T entity);
+    }
+}

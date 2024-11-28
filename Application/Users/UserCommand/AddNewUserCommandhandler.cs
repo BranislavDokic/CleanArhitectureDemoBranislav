@@ -1,39 +1,32 @@
 ﻿using Application.Books.Commands.CreateBook;
+using Application.Interfaces.Repositoryinterfaces;
 using Domain;
-using Infrastructure.Database;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 
 namespace Application.Users.UserCommand
 {
     public class AddNewUserCommandhandler : IRequestHandler<AddNewUserCommand, User>
     {
-        private readonly FakeDatabas _fakeDatabas;
+        private readonly IGenericRepositoryInterface<User> _userRepository;
 
-        public AddNewUserCommandhandler(FakeDatabas fakeDatabas)
+        public AddNewUserCommandhandler(IGenericRepositoryInterface<User> userRepository)
         {
-            _fakeDatabas = fakeDatabas;
+            _userRepository = userRepository;
         }
 
-        public Task<User> Handle(AddNewUserCommand request, CancellationToken cancellationToken)
+        public async Task<User> Handle(AddNewUserCommand request, CancellationToken cancellationToken)
         {
-            User userToAdd = new()
+            var userToAdd = new User
             {
                 Id = Guid.NewGuid(),
                 UserName = request.NewUser.UserName,
                 Password = request.NewUser.Password
             };
 
-            _fakeDatabas.Users.Add(userToAdd);
+            await _userRepository.AddAsync(userToAdd);
 
-            
-            return Task.FromResult(userToAdd);
+            return userToAdd;
         }
     }
 }

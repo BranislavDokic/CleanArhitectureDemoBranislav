@@ -1,4 +1,5 @@
-﻿using Infrastructure.Database;
+﻿using Application.Interfaces.Repositoryinterfaces;
+using Domain;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -10,29 +11,25 @@ namespace Application.Books.Commands.DeleteBook
 {
     public class DeleteBookCommandHandler : IRequestHandler<DeleteBookCommand, bool>
     {
-        private readonly FakeDatabas _fakeDatabas;
+        private readonly IGenericRepositoryInterface<Book> _bookRepository;
 
-        public DeleteBookCommandHandler(FakeDatabas fakeDatabas)
+        public DeleteBookCommandHandler(IGenericRepositoryInterface<Book> bookRepository)
         {
-            _fakeDatabas = fakeDatabas;
+            _bookRepository = bookRepository;
         }
 
-        public Task<bool> Handle(DeleteBookCommand request, CancellationToken cancellationToken)
+
+        public async Task<bool> Handle(DeleteBookCommand request, CancellationToken cancellationToken)
         {
-           
-            var book = _fakeDatabas.Books.FirstOrDefault(b => b.Id == request.BookId);
+            var book = await _bookRepository.GetByIdAsync(request.BookId);
 
             if (book == null)
             {
-                
-                return Task.FromResult(false);
+                return false; 
             }
 
-           
-            _fakeDatabas.Books.Remove(book);
-
-            
-            return Task.FromResult(true);
+            await _bookRepository.DeleteAsync(request.BookId);
+            return true; 
         }
     }
 }
