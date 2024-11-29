@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Repositoryinterfaces;
+﻿using Application.Dtos;
+using Application.Interfaces.Repositoryinterfaces;
 using Domain;
 using MediatR;
 
@@ -18,7 +19,16 @@ namespace Application.Books.Queries.GetAllBook
         {
 
             var books = await _bookRepository.GetAllAsync();
+            var bookDtos = books.Select(b => new BookDTO
+            {
+               
+                Title = b.Title,
+                Description = b.Description,
+                AuthorId = b.AuthorId 
+            }).ToList();
+
             return books;
+           
 
         }
     }
