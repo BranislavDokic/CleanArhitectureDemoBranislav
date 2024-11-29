@@ -14,16 +14,19 @@ namespace Domain
         public string? Description { get; set; }
 
         public int AuthorId { get; set; }
-
         public Author Author { get; set; } = null!;
 
+        public int LibraryId { get; set; }
+        public LibraryModel Library { get; set; } = null!;
 
-        public Book(int id, string title, string description, Author author)
+
+        public Book(int id, string title, string description, Author author, LibraryModel library)
         {
             Id = id;
             Title = title;
             Description = description;
             Author = author;
+            Library = library;
         }
 
         public Book()

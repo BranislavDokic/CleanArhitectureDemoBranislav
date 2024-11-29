@@ -13,14 +13,18 @@ namespace Application.Dtos
         public string Description { get; set; } = string.Empty;
         public int AuthorId { get; set; }
 
+        public int LibraryId { get; set; }
+
+        public LibraryDTO Library { get; set; } = new LibraryDTO();
         public AuthorDTO Author { get; set; } = new AuthorDTO();
         public BookDTO(Book book)
         {
             Title = book.Title ?? string.Empty;
             Description = book.Description ?? string.Empty;
-            AuthorId = book.Author.Id;
-
+            AuthorId = book.AuthorId;
             Author = new AuthorDTO(book.Author);
+            LibraryId = book.LibraryId;
+            Library = new LibraryDTO(book.Library);
         }
 
         public BookDTO() { }

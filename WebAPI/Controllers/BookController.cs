@@ -8,7 +8,6 @@ using Application.Dtos;
 using Application.Books.Queries.GetAllBook;
 using Microsoft.AspNetCore.Authorization;
 using Application.Books.Queries.GetBookById;
-using System.Text.Json;
 using Application.Authors.AuthorCommands.DeleteAuthor;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
