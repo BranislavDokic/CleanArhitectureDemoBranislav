@@ -19,6 +19,11 @@ namespace Domain
         public int LibraryId { get; set; }
         public LibraryModel Library { get; set; } = null!;
 
+        public List<Genre> Genres { get; set; } = new();
+
+        public Book()
+        {
+        }
 
         public Book(int id, string title, string description, Author author, LibraryModel library)
         {
@@ -29,9 +34,7 @@ namespace Domain
             Library = library;
         }
 
-        public Book()
-        {
-        }
+       
     }
 
 

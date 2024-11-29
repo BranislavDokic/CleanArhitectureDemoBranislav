@@ -1,5 +1,6 @@
 using Application;
 using Infrastructure;
+using Infrastructure.Database;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -84,6 +85,15 @@ namespace WebAPI
             builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("DefaultConnection"));
 
             var app = builder.Build();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                var context = services.GetRequiredService<RealDatabase>();
+
+
+                SeedDatabas.Initialize(services, context);
+            }
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
