@@ -8,10 +8,18 @@ namespace Domain
 {
     public class LibraryModel
     {
-        public int LibraryId { get; set; }
+        public int Id { get; set; }
         public string Name { get; set; }
         public List<Book> Books { get; set; } = new();
 
         public LibraryModel() { }
+
+        public LibraryModel(int libraryId, string name, List<Book> books)
+        {
+            Id = libraryId;
+            Name = name;
+            Books = books;
+        }
+
     }
 }
