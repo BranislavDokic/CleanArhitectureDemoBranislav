@@ -57,29 +57,26 @@ namespace WebAPI.Controllers
         // POST api/<BookController>
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> CreateBook([FromBody] BookDTO bookToAdd)
+        public async Task<IActionResult> CreateBook([FromBody] CreateBookDTO bookDTO)
         {
-            if (bookToAdd.AuthorId <= 0)
+            if (bookDTO == null)
             {
-                return BadRequest("Invalid AuthorId");
+                return BadRequest("Book data is null");
             }
+
+            var createBookCommand = new CreateBookCommand(bookDTO);
 
             try
             {
-                var createdBooks = await _mediatr.Send(new CreateBookCommand(bookToAdd));
 
-                var newBook = createdBooks.LastOrDefault();
+                var result = await _mediatr.Send(createBookCommand);
 
-                if (newBook == null)
-                {
-                    return StatusCode(500, "Book could not be added.");
-                }
-
-                return Ok(new { Message = "Book has been successfully added.", Book = newBook });
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Message = "An unexpected error occurred.", Details = ex.Message });
+
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 

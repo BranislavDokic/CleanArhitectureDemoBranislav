@@ -33,13 +33,15 @@ namespace Application.Books.Commands.UpdateBook
             bookToUpdate.Title = request.UpdatedBook.Title;
             bookToUpdate.Description = request.UpdatedBook.Description;
 
-            var author = await _authorRepository.GetByIdAsync(request.UpdatedBook.AuthorId);
-            if (author == null)
+            var author = await _authorRepository.GetAllAsync();
+            var foundAuthor = author.FirstOrDefault(a => a.Name.Equals(request.UpdatedBook.AuthorName, StringComparison.OrdinalIgnoreCase));
+
+            if (foundAuthor == null)
             {
-                throw new Exception($"Author with ID {request.UpdatedBook.AuthorId} not found.");
+                throw new Exception($"Author with name {request.UpdatedBook.AuthorName} not found.");
             }
 
-            bookToUpdate.Author = author;
+            bookToUpdate.Author = foundAuthor;
 
             await _bookRepository.UpdateAsync(bookToUpdate.Id, bookToUpdate);
 

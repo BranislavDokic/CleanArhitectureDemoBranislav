@@ -6,7 +6,7 @@ using MediatR;
 
 namespace Application.Books.Queries.GetAllBook
 {
-    public class GetAllBooksQueryHandler : IRequestHandler<GetAllBooksQuery, List<Book>>
+    public class GetAllBooksQueryHandler : IRequestHandler<GetAllBooksQuery, List<BookDTO>>
     {
         private readonly IGenericRepositoryInterface<Book> _bookRepository;
 
@@ -15,20 +15,19 @@ namespace Application.Books.Queries.GetAllBook
             _bookRepository = bookRepository;
         }
 
-        public async Task<List<Book>> Handle(GetAllBooksQuery request, CancellationToken cancellationToken)
+        public async Task<List<BookDTO>> Handle(GetAllBooksQuery request, CancellationToken cancellationToken)
         {
 
             var books = await _bookRepository.GetAllAsync();
             var bookDtos = books.Select(b => new BookDTO
             {
-               
                 Title = b.Title,
                 Description = b.Description,
-                AuthorId = b.AuthorId 
+                AuthorName = b.Author?.Name ?? string.Empty  
             }).ToList();
 
-            return books;
-           
+            return bookDtos;  // Returnera
+
 
         }
     }
