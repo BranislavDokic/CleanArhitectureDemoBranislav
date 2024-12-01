@@ -10,7 +10,7 @@ namespace Application.Interfaces.Repositoryinterfaces
     {
         Task<T> AddAsync(T entity);
         Task<List<T>> GetAllAsync();
-        Task<T> GetByIdAsync(int id);
+        Task<T> GetByIdAsync(int id, Func<IQueryable<T>, IQueryable<T>> include = null);
         Task<string> DeleteAsync(int id);
         Task<T> UpdateAsync(int id, T entity);
     }

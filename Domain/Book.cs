@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 
@@ -18,7 +19,7 @@ namespace Domain
 
         public int LibraryId { get; set; }
         public LibraryModel Library { get; set; } = null!;
-
+        [JsonIgnore]
         public List<Genre> Genres { get; set; } = new();
 
         public Book()

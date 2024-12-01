@@ -1,4 +1,5 @@
-﻿using Domain;
+﻿using Application.Dtos;
+using Domain;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Application.Books.Queries.GetAllBook
 {
-    public class GetAllBooksQuery : IRequest<List<Book>>
+    public class GetAllBooksQuery : IRequest<List<BookDTO>>
     {
     }
 }

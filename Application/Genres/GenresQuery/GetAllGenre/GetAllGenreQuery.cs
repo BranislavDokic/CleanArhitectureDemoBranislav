@@ -6,9 +6,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Library.LibraryQuery.GetAllLibrary
+namespace Application.Genres.GenresQuery.GetAllGenre
 {
-    public class GetAllLibraryQuery : IRequest<List<LibraryDTO>>
+    public class GetAllGenreQuery : IRequest<List<GenreDTO>>
     {
+
     }
 }

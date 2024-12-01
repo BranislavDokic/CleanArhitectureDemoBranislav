@@ -11,9 +11,9 @@ namespace Application.Books.Commands.CreateBook
 {
     public class CreateBookCommand : IRequest<List<Book>>
     {
-        public BookDTO NewBook { get; set; }
+        public CreateBookDTO NewBook { get; set; }
 
-        public CreateBookCommand(BookDTO newBook)
+        public CreateBookCommand(CreateBookDTO newBook)
         {
             NewBook = newBook;
         }

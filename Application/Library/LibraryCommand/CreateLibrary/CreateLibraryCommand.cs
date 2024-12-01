@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Application.Dtos;
+using Domain;
+using MediatR;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +9,13 @@ using System.Threading.Tasks;
 
 namespace Application.Library.LibraryCommand.CreateLibrary
 {
-    internal class CreateLibraryCommand
+    public class CreateLibraryCommand : IRequest<LibraryDTO>
     {
+        public LibraryDTO NewLibrary { get; }
+
+        public CreateLibraryCommand(LibraryDTO newLibrary)
+        {
+            NewLibrary = newLibrary;
+        }
     }
 }
