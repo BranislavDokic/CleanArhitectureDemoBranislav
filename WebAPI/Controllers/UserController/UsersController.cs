@@ -28,7 +28,21 @@ namespace WebAPI.Controllers.UserController
         [Route ("getAllUsers")]
         public async Task<IActionResult> GetAllUsers()
         {
-            return Ok(await _mediatr.Send(new GetAllUsersQueri()));
+            try
+            {
+                var result = await _mediatr.Send(new GetAllUsersQueri());
+
+                if (result.IsSuccess)
+                {
+                    return Ok(new { Message = result.Message, Users = result.Data });
+                }
+
+                return BadRequest(new { Message = result.Message, Errors = result.ErrorMessage });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An unexpected error occurred.", Details = ex.Message });
+            }
         }
 
         // GET api/<UsersController>/5
@@ -52,7 +66,12 @@ namespace WebAPI.Controllers.UserController
 
                 var result = await _mediatr.Send(new AddNewUserCommand(userToAdd));
 
-                return Ok(new { Message = "User has been successfully added to the list.", User = result });
+                if (result.IsSuccess)
+                {
+                    return Ok(new { Message = result.Message, User = result.Data });
+                }
+
+                return BadRequest(new { Message = result.Message, Errors = result.ErrorMessage });
             }
             catch (Exception ex)
             {
@@ -64,7 +83,21 @@ namespace WebAPI.Controllers.UserController
         [Route("Login")]
         public async Task<IActionResult> Login([FromBody] UserDTO userWantingToLogin)
         {
-            return Ok(await _mediatr.Send(new UserLoginQueri(userWantingToLogin)));
+            try
+            {
+                var result = await _mediatr.Send(new UserLoginQueri(userWantingToLogin));
+
+                if (result.IsSuccess)
+                {
+                    return Ok(new { Message = result.Message, Token = result.Data });
+                }
+
+                return BadRequest(new { Message = result.Message, Errors = result.ErrorMessage });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An unexpected error occurred.", Details = ex.Message });
+            }
         }
 
         // PUT api/<UsersController>/5

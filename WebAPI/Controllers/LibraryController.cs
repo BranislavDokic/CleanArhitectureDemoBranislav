@@ -28,18 +28,23 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var libraries = await _mediator.Send(new GetAllLibraryQuery());
+                var result = await _mediator.Send(new GetAllLibraryQuery());
 
-                if (libraries == null || libraries.Count == 0)
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
+                }
+
+                if (result.Data == null || result.Data.Count == 0)
                 {
                     return NotFound("No libraries found.");
                 }
 
-                return Ok(libraries);
+                return Ok(new { message = result.Message, data = result.Data });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { Message = "An unexpected error occurred while fetching libraries.", Details = ex.Message });
             }
         }
 
@@ -49,18 +54,18 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var library = await _mediator.Send(new GetLibraryByIdQuery(id));
+                var result = await _mediator.Send(new GetLibraryByIdQuery(id));
 
-                if (library == null)
+                if (result.IsSuccess)
                 {
-                    return NotFound($"Library with ID {id} not found.");
+                    return Ok(new { message = result.Message, data = result.Data });
                 }
 
-                return Ok(library); 
+                return NotFound(new { message = result.Message, errors = result.ErrorMessage });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { Message = "An unexpected error occurred while retrieving the library.", Details = ex.Message });
             }
         }
 
@@ -76,11 +81,29 @@ namespace WebAPI.Controllers
             try
             {
                 var result = await _mediator.Send(new CreateLibraryCommand(newLibrary));
-                return CreatedAtAction(nameof(GetAllLibraries), result); 
+
+                if (result.IsSuccess)
+                {
+                    return CreatedAtAction(nameof(GetAllLibraries), new { id = result.Data }, new
+                    {
+                        message = result.Message, 
+                        data = result.Data 
+                    });
+                }
+
+                return BadRequest(new
+                {
+                    message = result.Message, 
+                    errors = result.ErrorMessage 
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new
+                {
+                    Message = "An unexpected error occurred while creating the library.",
+                    Details = ex.Message
+                });
             }
         }
 
@@ -97,22 +120,20 @@ namespace WebAPI.Controllers
 
                 var result = await _mediator.Send(new UpdateLibraryCommand(id, updateLibrary.Name));
 
-                if (result == "Library updated successfully")
+                if (!result.IsSuccess)
                 {
-                    return Ok($"Library with ID {id} has been updated.");
+                    if (result.ErrorMessage.Contains("not found"))
+                    {
+                        return NotFound(new { message = result.Message, errors = result.ErrorMessage });
+                    }
+                    return StatusCode(500, new { message = result.Message, errors = result.ErrorMessage });
                 }
-                else if (result == "Library not found")
-                {
-                    return NotFound($"Library with ID {id} not found.");
-                }
-                else
-                {
-                    return StatusCode(500, "Internal server error.");
-                }
+
+                return Ok(new { message = result.Message, data = result.Data });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { Message = "An unexpected error occurred while updating the library.", Details = ex.Message });
             }
         }
 
@@ -124,22 +145,16 @@ namespace WebAPI.Controllers
             {
                 var result = await _mediator.Send(new DeleteLibraryCommand(id));
 
-                if (result == "Deleted")
+                if (!result.IsSuccess)
                 {
-                    return Ok($"Library with ID {id} has been deleted.");
+                    return BadRequest(new { message = result.Message, errors = result.ErrorMessage, data = result.Data });
                 }
-                else if (result == "Library not found")
-                {
-                    return NotFound($"Library with ID {id} not found.");
-                }
-                else
-                {
-                    return StatusCode(500, $"Internal server error: {result}");
-                }
+
+                return Ok(new { message = result.Message, data = result.Data });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { Message = "An unexpected error occurred while deleting the library.", Details = ex.Message });
             }
         }
     }

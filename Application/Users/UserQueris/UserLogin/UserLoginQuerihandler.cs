@@ -1,11 +1,12 @@
 ﻿using Application.Interfaces.Repositoryinterfaces;
 using Application.Users.UserQueris.UserLogin.Helpers;
 using Domain;
+using Domain.Result;
 using MediatR;
 
 namespace Application.Users.UserQueris.UserLogin
 {
-    public class UserLoginQuerihandler : IRequestHandler<UserLoginQueri, string>
+    public class UserLoginQuerihandler : IRequestHandler<UserLoginQueri, OperationResult<string>>
     {
         private readonly IGenericRepositoryInterface<User> _userRepository;
         private readonly TokenHelper _tokenHelper;
@@ -18,19 +19,27 @@ namespace Application.Users.UserQueris.UserLogin
 
 
 
-        public async Task<string> Handle(UserLoginQueri request, CancellationToken cancellationToken)
+        public async Task<OperationResult<string>> Handle(UserLoginQueri request, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetAllAsync();
-            var foundUser = user.FirstOrDefault(u => u.UserName == request.LoginUser.UserName && u.Password == request.LoginUser.Password);
-
-            if (foundUser == null)
+            try
             {
-                throw new UnauthorizedAccessException("Invalid username or password");
+                var users = await _userRepository.GetAllAsync();
+
+                var foundUser = users.FirstOrDefault(u => u.UserName == request.LoginUser.UserName && u.Password == request.LoginUser.Password);
+
+                if (foundUser == null)
+                {
+                    return OperationResult<string>.Failure("Invalid username or password", "Login failed");
+                }
+
+                string token = _tokenHelper.GeneretJwtToken(foundUser);
+
+                return OperationResult<string>.Success(token, "Login successful");
             }
-
-            string token = _tokenHelper.GeneretJwtToken(foundUser);
-
-            return token;
+            catch (Exception ex)
+            {
+                return OperationResult<string>.Failure($"An error occurred: {ex.Message}", "Login failed");
+            }
         }
     }
 }

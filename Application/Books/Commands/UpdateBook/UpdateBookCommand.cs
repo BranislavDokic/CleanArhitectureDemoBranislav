@@ -1,5 +1,6 @@
 ﻿using Application.Dtos;
 using Domain;
+using Domain.Result;
 using MediatR;
 
 using System;
@@ -10,16 +11,16 @@ using System.Threading.Tasks;
 
 namespace Application.Books.Commands.UpdateBook
 {
-    public class UpdateBookCommand : IRequest<Book>
+    public class UpdateBookCommand : IRequest<OperationResult<UpdateBookDTO>>
     {
-        public UpdateBookCommand(int bookId, BookDTO updatedBook)
+        public UpdateBookCommand(int bookId, UpdateBookDTO updatedBook)
         {
             BookId = bookId;
             UpdatedBook = updatedBook;
         }
 
         public int BookId { get; }
-        public BookDTO UpdatedBook { get; }
+        public UpdateBookDTO UpdatedBook { get; }
     }
 
 }

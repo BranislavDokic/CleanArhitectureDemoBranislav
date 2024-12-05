@@ -1,6 +1,7 @@
 ﻿using Application.Dtos;
 using Application.Interfaces.Repositoryinterfaces;
 using Domain;
+using Domain.Result;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Application.Library.LibraryQuery.GetLibraryById
 {
-    public class GetLibraryByIdQueryHandler : IRequestHandler<GetLibraryByIdQuery, LibraryDTO>
+    public class GetLibraryByIdQueryHandler : IRequestHandler<GetLibraryByIdQuery, OperationResult<LibraryDTO>>
     {
         private readonly IGenericRepositoryInterface<LibraryModel> _libraryRepository;
 
@@ -20,14 +21,30 @@ namespace Application.Library.LibraryQuery.GetLibraryById
             _libraryRepository = libraryRepository;
         }
 
-        public async Task<LibraryDTO> Handle(GetLibraryByIdQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<LibraryDTO>> Handle(GetLibraryByIdQuery request, CancellationToken cancellationToken)
         {
-            var library = await _libraryRepository.GetByIdAsync(request.LibraryId, query => query.Include(l => l.Books));
+            try
+            {
+                var library = await _libraryRepository.GetByIdAsync(
+                    request.LibraryId,
+                    query => query.Include(l => l.Books));
 
-            if (library == null)
-                throw new KeyNotFoundException($"Library with ID {request.LibraryId} not found.");
+                if (library == null)
+                {
+                    return OperationResult<LibraryDTO>.Failure($"Library with ID {request.LibraryId} not found.");
+                }
 
-            return new LibraryDTO(library);
+                var libraryDTO = new LibraryDTO(library)
+                {
+                    BookNames = library.Books.Select(b => b.Title).ToList() 
+                };
+
+                return OperationResult<LibraryDTO>.Success(libraryDTO, "Library retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<LibraryDTO>.Failure($"Error: {ex.Message}");
+            }
         }
     }
 }

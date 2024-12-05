@@ -1,4 +1,5 @@
 ﻿using Domain;
+using Domain.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Application.Users.UserQueris.GetAllUsers
 {
-    public class GetAllUsersQueri : IRequest<List<User>>
+    public class GetAllUsersQueri : IRequest<OperationResult<List<User>>>
     {
 
     }

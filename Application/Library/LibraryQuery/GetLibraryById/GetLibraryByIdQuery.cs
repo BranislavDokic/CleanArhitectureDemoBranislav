@@ -1,4 +1,5 @@
 ﻿using Application.Dtos;
+using Domain.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Application.Library.LibraryQuery.GetLibraryById
 {
-    public class GetLibraryByIdQuery : IRequest<LibraryDTO>
+    public class GetLibraryByIdQuery : IRequest<OperationResult<LibraryDTO>>
     {
         public int LibraryId { get; }
 

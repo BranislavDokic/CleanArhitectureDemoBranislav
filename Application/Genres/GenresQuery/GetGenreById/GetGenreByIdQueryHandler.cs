@@ -1,6 +1,7 @@
 ﻿using Application.Dtos;
 using Application.Interfaces.Repositoryinterfaces;
 using Domain;
+using Domain.Result;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Application.Genres.GenresQuery.GetGenreById
 {
-    public class GetGenreByIdQueryHandler : IRequestHandler<GetGenreByIdQuery, GenreDTO>
+    public class GetGenreByIdQueryHandler : IRequestHandler<GetGenreByIdQuery, OperationResult<GenreDTO>>
     {
         private readonly IGenericRepositoryInterface<Genre> _genreRepository;
 
@@ -20,25 +21,34 @@ namespace Application.Genres.GenresQuery.GetGenreById
             _genreRepository = genreRepository;
         }
 
-        public async Task<GenreDTO> Handle(GetGenreByIdQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<GenreDTO>> Handle(GetGenreByIdQuery request, CancellationToken cancellationToken)
         {
-            var genre = await _genreRepository.GetByIdAsync(
-                request.GenreId,
-                query => query.Include(g => g.Books));
-
-            if (genre == null)
+            try
             {
-                throw new KeyNotFoundException($"Genre with ID {request.GenreId} not found.");
+                var genre = await _genreRepository.GetByIdAsync(
+                    request.GenreId,
+                    query => query.Include(g => g.Books));
+
+                if (genre == null)
+                {
+                    return OperationResult<GenreDTO>.Failure($"Genre with ID {request.GenreId} not found.");
+                }
+
+                var bookNames = genre.Books.Select(b => b.Title).ToList();
+
+                var genreDTO = new GenreDTO
+                {
+                    Id = genre.Id,
+                    Name = genre.Name,
+                    BookNames = bookNames
+                };
+
+                return OperationResult<GenreDTO>.Success(genreDTO, "Genre retrieved successfully.");
             }
-
-            var bookNames = genre.Books.Select(b => b.Title).ToList();
-
-            return new GenreDTO
+            catch (Exception ex)
             {
-                Id = genre.Id,
-                Name = genre.Name,
-                BookNames = bookNames
-            };
+                return OperationResult<GenreDTO>.Failure($"Error: {ex.Message}");
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Application.Dtos;
 using Application.Interfaces.Repositoryinterfaces;
 using Domain;
+using Domain.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Application.Genres.GenresCommands.CreateGenre
 {
-    public class CreateGenreCommandHandler : IRequestHandler<CreateGenreCommand, GenreDTO>
+    public class CreateGenreCommandHandler : IRequestHandler<CreateGenreCommand, OperationResult<GenreDTO>>
     {
         private readonly IGenericRepositoryInterface<Genre> _genreRepository;
 
@@ -19,19 +20,31 @@ namespace Application.Genres.GenresCommands.CreateGenre
             _genreRepository = genreRepository;
         }
 
-        public async Task<GenreDTO> Handle(CreateGenreCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<GenreDTO>> Handle(CreateGenreCommand request, CancellationToken cancellationToken)
         {
-          
+            var existingGenre = await _genreRepository.GetAllAsync();
+            if (existingGenre.Any(g => g.Name.Equals(request.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                return OperationResult<GenreDTO>.Failure($"Genre with the name '{request.Name}' already exists.");
+            }
+
             var genre = new Genre
             {
                 Name = request.Name
             };
 
-          
-            var createdGenre = await _genreRepository.AddAsync(genre);
+            try
+            {
+                var createdGenre = await _genreRepository.AddAsync(genre);
 
-            
-            return new GenreDTO(createdGenre);
+                var genreDto = new GenreDTO(createdGenre);
+
+                return OperationResult<GenreDTO>.Success(genreDto, "Genre successfully created.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<GenreDTO>.Failure(ex.Message, "Failed to create genre.");
+            }
         }
     }
 }

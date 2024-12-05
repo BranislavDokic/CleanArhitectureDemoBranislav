@@ -1,5 +1,6 @@
 ﻿using Application.Dtos;
 using Domain;
+using Domain.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Application.Users.UserCommand
 {
-    public class AddNewUserCommand : IRequest<User>
+    public class AddNewUserCommand : IRequest<OperationResult<User>>
     {
         public AddNewUserCommand(UserDTO newUser)
         {

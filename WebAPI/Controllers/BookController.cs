@@ -33,8 +33,13 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> GetAllBooks()
         {
             var query = new GetAllBooksQuery();
-            var books = await _mediatr.Send(query); 
-            return Ok(books); 
+            var result = await _mediatr.Send(query);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
+            }
+            return Ok(new {message = result.Message, data  = result.Data});
         }
 
         // GET api/<BookController>/5
@@ -42,16 +47,15 @@ namespace WebAPI.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetBookById(int id)
         {
-            try
-            {
-                var query = new GetBookByIdQuery(id);
-                var book = await _mediatr.Send(query);
-                return Ok(book);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
+           var query = new GetBookByIdQuery(id);
+           var result = await _mediatr.Send(query);
+
+           if (!result.IsSuccess)
+           {
+                return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
+           }
+
+           return Ok(new {message = result.Message, data = result.Data});
         }
 
         // POST api/<BookController>
@@ -68,15 +72,18 @@ namespace WebAPI.Controllers
 
             try
             {
-
                 var result = await _mediatr.Send(createBookCommand);
 
-                return Ok(result);
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
+                }
+
+                return Ok(new { message = result.Message, data = result.Data });
             }
             catch (Exception ex)
             {
-
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { Message = "An unexpected error occurred.", Details = ex.Message });
             }
         }
 
@@ -84,22 +91,22 @@ namespace WebAPI.Controllers
         // PUT api/<BookController>/5
         [Authorize]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateBook(int id, [FromBody] BookDTO updatedBook)
+        public async Task<IActionResult> UpdateBook(int id, [FromBody] UpdateBookDTO updatedBook)
         {
             if (updatedBook == null)
             {
                 return BadRequest("Invalid book data.");
             }
 
-            try
+            var result = await _mediatr.Send(new UpdateBookCommand(id, updatedBook));
+
+            if (!result.IsSuccess)
             {
-                var result = await _mediatr.Send(new UpdateBookCommand(id, updatedBook));
-                return Ok(result);
+                return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
             }
-            catch (Exception ex)
-            {
-                return NotFound(ex.Message);
-            }
+
+            return Ok(new { message = result.Message, data = result.Data });
+        
         }
 
         // DELETE api/<BookController>/5
@@ -112,12 +119,12 @@ namespace WebAPI.Controllers
             {
                 var result = await _mediatr.Send(new DeleteBookCommand(id));
 
-                if (result)
+                if (!result.IsSuccess)
                 {
-                    return Ok($"Book with ID {id} was successfully deleted.");
+                    return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
                 }
 
-                return NotFound($"Book with ID {id} not found.");
+                return Ok(new { message = result.Message });
             }
             catch (Exception ex)
             {

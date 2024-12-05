@@ -1,11 +1,12 @@
 ﻿using Application.Interfaces.Repositoryinterfaces;
 using Domain;
+using Domain.Result;
 using MediatR;
 
 
 namespace Application.Authors.AuthorCommands.DeleteAuthor
 {
-    public class DeleteAuthorCommandHandler : IRequestHandler<DeleteAuthorCommand, bool>
+    public class DeleteAuthorCommandHandler : IRequestHandler<DeleteAuthorCommand, OperationResult<bool>>
     {
         private readonly IGenericRepositoryInterface<Author> _authorRepository;
 
@@ -13,22 +14,25 @@ namespace Application.Authors.AuthorCommands.DeleteAuthor
         {
             _authorRepository = authorRepository;
         }
-        public async Task<bool> Handle(DeleteAuthorCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<bool>> Handle(DeleteAuthorCommand request, CancellationToken cancellationToken)
         {
             try
             {
-                var result = await _authorRepository.DeleteAsync(request.AuthorId);
+                var author = await _authorRepository.GetByIdAsync(request.AuthorId);
 
-                return result == "Deleted";
-            }
-            catch (KeyNotFoundException ex)
-            {
-                throw new KeyNotFoundException($"Author with ID {request.AuthorId} not found.", ex);
+                if (author == null) 
+                {
+                    return OperationResult<bool>.Failure($"Author with ID {request.AuthorId} not found.");
+                }
+
+                await _authorRepository.DeleteAsync(request.AuthorId);
+                return OperationResult<bool>.Success(true, "Author successfully deleted.");
             }
             catch (Exception ex)
             {
-                throw new Exception("An error occurred while deleting the author.", ex);
+                return OperationResult<bool>.Failure($"An unexpected error occurred: {ex.Message}");
             }
+
         }
     }
 }

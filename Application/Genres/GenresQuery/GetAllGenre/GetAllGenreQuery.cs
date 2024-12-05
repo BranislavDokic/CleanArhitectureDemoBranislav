@@ -1,4 +1,5 @@
 ﻿using Application.Dtos;
+using Domain.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Application.Genres.GenresQuery.GetAllGenre
 {
-    public class GetAllGenreQuery : IRequest<List<GenreDTO>>
+    public class GetAllGenreQuery : IRequest<OperationResult<List<GenreDTO>>>
     {
 
     }
