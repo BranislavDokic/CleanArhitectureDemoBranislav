@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Repositoryinterfaces;
 using Domain;
+using Domain.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Application.Library.LibraryCommand.UpdateLibrary
 {
-    public class UpdateLibraryCommandHandler : IRequestHandler<UpdateLibraryCommand, string>
+    public class UpdateLibraryCommandHandler : IRequestHandler<UpdateLibraryCommand, OperationResult<bool>>
     {
         private readonly IGenericRepositoryInterface<LibraryModel> _libraryRepository;
 
@@ -18,7 +19,7 @@ namespace Application.Library.LibraryCommand.UpdateLibrary
             _libraryRepository = libraryRepository;
         }
 
-        public async Task<string> Handle(UpdateLibraryCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<bool>> Handle(UpdateLibraryCommand request, CancellationToken cancellationToken)
         {
             try
             {
@@ -26,18 +27,18 @@ namespace Application.Library.LibraryCommand.UpdateLibrary
 
                 if (library == null)
                 {
-                    return "Library not found";
+                    return OperationResult<bool>.Failure($"Library with ID {request.LibraryId} not found.");
                 }
 
                 library.Name = request.NewName;
 
                 await _libraryRepository.UpdateAsync(request.LibraryId, library);
 
-                return "Library updated successfully";
+                return OperationResult<bool>.Success(true, "Library updated successfully.");
             }
             catch (Exception ex)
             {
-                return $"Error: {ex.Message}";
+                return OperationResult<bool>.Failure($"Error: {ex.Message}");
             }
         }
     }

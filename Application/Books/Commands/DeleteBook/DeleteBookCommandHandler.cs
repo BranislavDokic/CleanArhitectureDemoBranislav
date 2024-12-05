@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Repositoryinterfaces;
 using Domain;
+using Domain.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Application.Books.Commands.DeleteBook
 {
-    public class DeleteBookCommandHandler : IRequestHandler<DeleteBookCommand, bool>
+    public class DeleteBookCommandHandler : IRequestHandler<DeleteBookCommand, OperationResult<bool>>
     {
         private readonly IGenericRepositoryInterface<Book> _bookRepository;
 
@@ -19,17 +20,25 @@ namespace Application.Books.Commands.DeleteBook
         }
 
 
-        public async Task<bool> Handle(DeleteBookCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<bool>> Handle(DeleteBookCommand request, CancellationToken cancellationToken)
         {
-            var book = await _bookRepository.GetByIdAsync(request.BookId);
-
-            if (book == null)
+            try
             {
-                return false; 
-            }
+                var book = await _bookRepository.GetByIdAsync(request.BookId);
 
-            await _bookRepository.DeleteAsync(request.BookId);
-            return true; 
+                if (book == null)
+                {
+                    return OperationResult<bool>.Failure($"Book with ID {request.BookId} not found.");
+                }
+
+                await _bookRepository.DeleteAsync(request.BookId);
+
+                return OperationResult<bool>.Success(true, "Book successfully deleted.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<bool>.Failure($"An unexpected error occurred: {ex.Message}");
+            }
         }
     }
 }

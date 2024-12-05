@@ -20,7 +20,7 @@ namespace Domain
         public int LibraryId { get; set; }
         public LibraryModel Library { get; set; } = null!;
         [JsonIgnore]
-        public List<Genre> Genres { get; set; } = new();
+        public List<Genre> Genres { get; set; }
 
         public Book()
         {

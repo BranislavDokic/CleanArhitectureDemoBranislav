@@ -1,11 +1,12 @@
 ﻿using Application.Interfaces.Repositoryinterfaces;
 using Domain;
+using Domain.Result;
 using MediatR;
 
 
 namespace Application.Authors.AuthorQueris.GetAllAuthors
 {
-    public class GetAllAuthorsQueryHandler : IRequestHandler<GetAllAuthorsQuery, List<Author>>
+    public class GetAllAuthorsQueryHandler : IRequestHandler<GetAllAuthorsQuery, OperationResult<List<Author>>>
     {
         private readonly IGenericRepositoryInterface<Author> _authorRepository;
 
@@ -13,10 +14,21 @@ namespace Application.Authors.AuthorQueris.GetAllAuthors
         {
             _authorRepository = authorRepository;
         }
-        public async Task<List<Author>> Handle(GetAllAuthorsQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<List<Author>>> Handle(GetAllAuthorsQuery request, CancellationToken cancellationToken)
         {
-            var authors = await _authorRepository.GetAllAsync();
-            return authors;
+            try
+            {
+                var authors = await _authorRepository.GetAllAsync();
+                if (authors == null || !authors.Any())
+                {
+                    return OperationResult<List<Author>>.Failure("No authors found.");
+                }
+                return OperationResult<List<Author>>.Success(authors, "Authors retrieved successfully.");
+            }
+            catch (Exception ex)
+            {
+                return OperationResult<List<Author>>.Failure($"An error occurred: {ex.Message}");
+            }
         }
     }
 }

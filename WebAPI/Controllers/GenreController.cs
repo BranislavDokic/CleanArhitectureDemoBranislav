@@ -26,8 +26,21 @@ namespace WebAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var genres = await _mediator.Send(new GetAllGenreQuery());
-            return Ok(genres);
+            try
+            {
+                var result = await _mediator.Send(new GetAllGenreQuery());
+
+                if (result.IsSuccess)
+                {
+                    return Ok(new { message = result.Message, data = result.Data });
+                }
+
+                return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An unexpected error occurred while retrieving genres.", Details = ex.Message });
+            }
         }
 
         // GET api/<GenreController>/5
@@ -36,22 +49,18 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var genre = await _mediator.Send(new GetGenreByIdQuery(id));
+                var result = await _mediator.Send(new GetGenreByIdQuery(id));
 
-                if (genre == null)
+                if (result.IsSuccess)
                 {
-                    return NotFound($"Genre with ID {id} not found.");
+                    return Ok(new { message = result.Message, data = result.Data });
                 }
 
-                return Ok(genre);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
+                return NotFound(new { message = result.Message, errors = result.ErrorMessage });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { Message = "An unexpected error occurred while retrieving the genre.", Details = ex.Message });
             }
         }
 
@@ -59,8 +68,14 @@ namespace WebAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<GenreDTO>> CreateGenre([FromBody] CreateGenreCommand command)
         {
-            var genre = await _mediator.Send(command);
-            return Ok(genre);
+            var result = await _mediator.Send(command);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
+            }
+
+            return Ok(new { message = result.Message, data = result.Data });
         }
 
         // PUT api/<GenreController>/5
@@ -71,20 +86,16 @@ namespace WebAPI.Controllers
             {
                 var result = await _mediator.Send(new UpdateGenreCommand(id, newName));
 
-                if (result == "Genre updated successfully.")
+                if (result.IsSuccess)
                 {
-                    return Ok(result);
+                    return Ok(new { message = result.Message, data = result.Data });
                 }
 
-                return NotFound(result);
+                return NotFound(new { message = result.Message, errors = result.ErrorMessage });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    Message = "An unexpected error occurred while updating the genre.",
-                    Details = ex.Message
-                });
+                return StatusCode(500, new { Message = "An unexpected error occurred while updating the genre.", Details = ex.Message });
             }
         }
 
@@ -96,25 +107,18 @@ namespace WebAPI.Controllers
             {
                 var result = await _mediator.Send(new DeleteGenreCommand(id));
 
-                if (result)
+                if (!result.IsSuccess)
                 {
-                    return Ok($"Genre with ID {id} was successfully deleted.");
+                    return BadRequest(new { message = result.Message, errors = result.ErrorMessage, data = result.Data });
                 }
 
-                return BadRequest("Failed to delete genre.");
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
+                return Ok(new { message = result.Message, data = result.Data });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    Message = "An unexpected error occurred while deleting the genre.",
-                    Details = ex.Message
-                });
+                return StatusCode(500, new { Message = "An unexpected error occurred while deleting the genre.", Details = ex.Message });
             }
+
         }
 
     }

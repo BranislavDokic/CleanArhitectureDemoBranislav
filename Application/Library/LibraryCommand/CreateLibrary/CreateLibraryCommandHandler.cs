@@ -1,6 +1,7 @@
 ﻿using Application.Dtos;
 using Application.Interfaces.Repositoryinterfaces;
 using Domain;
+using Domain.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Application.Library.LibraryCommand.CreateLibrary
 {
-    public class CreateLibraryCommandHandler : IRequestHandler<CreateLibraryCommand, LibraryDTO>
+    public class CreateLibraryCommandHandler : IRequestHandler<CreateLibraryCommand, OperationResult<LibraryDTO>>
     {
         private readonly IGenericRepositoryInterface<LibraryModel> _libraryRepository;
 
@@ -19,10 +20,18 @@ namespace Application.Library.LibraryCommand.CreateLibrary
             _libraryRepository = libraryRepository;
         }
 
-        public async Task<LibraryDTO> Handle(CreateLibraryCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<LibraryDTO>> Handle(CreateLibraryCommand request, CancellationToken cancellationToken)
         {
             try
             {
+                var existingLibrary = await _libraryRepository.GetAllAsync();
+                var libraryAlreadyExists = existingLibrary.FirstOrDefault(l => l.Name.Equals(request.NewLibrary.Name, StringComparison.OrdinalIgnoreCase));
+
+                if (libraryAlreadyExists != null)
+                {
+                    return OperationResult<LibraryDTO>.Failure($"Library with the name '{request.NewLibrary.Name}' already exists.");
+                }
+
                 var library = new LibraryModel
                 {
                     Name = request.NewLibrary.Name
@@ -30,11 +39,13 @@ namespace Application.Library.LibraryCommand.CreateLibrary
 
                 await _libraryRepository.AddAsync(library);
 
-                return new LibraryDTO(library);
+                var libraryDTO = new LibraryDTO(library);
+
+                return OperationResult<LibraryDTO>.Success(libraryDTO, "Library successfully added.");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw new Exception("Library not added");
+                return OperationResult<LibraryDTO>.Failure($"Error: {ex.Message}");
             }
         }
     }

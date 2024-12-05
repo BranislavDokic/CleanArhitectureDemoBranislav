@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Repositoryinterfaces;
 using Domain;
+using Domain.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Application.Library.LibraryCommand.DeleteLibrary
 {
-    public class DeleteLibraryCommandHandler : IRequestHandler<DeleteLibraryCommand, string>
+    public class DeleteLibraryCommandHandler : IRequestHandler<DeleteLibraryCommand, OperationResult<bool>>
     {
         private readonly IGenericRepositoryInterface<LibraryModel> _libraryRepository;
 
@@ -18,7 +19,7 @@ namespace Application.Library.LibraryCommand.DeleteLibrary
             _libraryRepository = libraryRepository;
         }
 
-        public async Task<string> Handle(DeleteLibraryCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<bool>> Handle(DeleteLibraryCommand request, CancellationToken cancellationToken)
         {
             try
             {
@@ -26,16 +27,15 @@ namespace Application.Library.LibraryCommand.DeleteLibrary
 
                 if (library == null)
                 {
-                   
-                    return "Library not found"; 
+                    return OperationResult<bool>.Failure($"Library with ID {request.LibraryId} not found.");
                 }
 
                 await _libraryRepository.DeleteAsync(request.LibraryId);
-                return "Deleted";
+                return OperationResult<bool>.Success(true, "Library successfully deleted.");
             }
             catch (Exception ex)
             {
-                return $"Error: {ex.Message}";
+                return OperationResult<bool>.Failure($"An unexpected error occurred: {ex.Message}");
             }
         }
     }

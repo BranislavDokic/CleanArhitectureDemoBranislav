@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using Domain.Result;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Application.Authors.AuthorCommands.UpdateAuthor
 {
-    public class UpdateAuthorCommand : IRequest<bool>
+    public class UpdateAuthorCommand : IRequest<OperationResult<bool>>
     {
         public int AuthorId { get; }
         public string NewName { get; }

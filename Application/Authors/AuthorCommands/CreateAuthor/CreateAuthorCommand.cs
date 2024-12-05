@@ -1,5 +1,6 @@
 ﻿using Application.Dtos;
 using Domain;
+using Domain.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Application.Authors.AuthorCommands.CreateAuthor
 {
-    public class CreateAuthorCommand : IRequest<List<Author>>
+    public class CreateAuthorCommand : IRequest<OperationResult<List<Author>>>
     {
         public CreateAuthorCommand(AuthorDTO newAuthor)
         {

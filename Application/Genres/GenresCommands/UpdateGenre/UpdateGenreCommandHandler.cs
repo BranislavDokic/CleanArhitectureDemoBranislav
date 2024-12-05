@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Repositoryinterfaces;
 using Domain;
+using Domain.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Application.Genres.GenresCommands.UpdateGenre
 {
-    public class UpdateGenreCommandHandler : IRequestHandler<UpdateGenreCommand, string>
+    public class UpdateGenreCommandHandler : IRequestHandler<UpdateGenreCommand, OperationResult<string>>
     {
         private readonly IGenericRepositoryInterface<Genre> _genreRepository;
 
@@ -18,7 +19,7 @@ namespace Application.Genres.GenresCommands.UpdateGenre
             _genreRepository = genreRepository;
         }
 
-        public async Task<string> Handle(UpdateGenreCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<string>> Handle(UpdateGenreCommand request, CancellationToken cancellationToken)
         {
             try
             {
@@ -26,18 +27,18 @@ namespace Application.Genres.GenresCommands.UpdateGenre
 
                 if (genre == null)
                 {
-                    return $"Genre with ID {request.GenreId} not found.";
+                    return OperationResult<string>.Failure($"Genre with ID {request.GenreId} not found.");
                 }
 
                 genre.Name = request.NewName;
 
                 await _genreRepository.UpdateAsync(request.GenreId, genre);
 
-                return "Genre updated successfully.";
+                return OperationResult<string>.Success("Genre updated successfully.");
             }
             catch (Exception ex)
             {
-                return $"Error: {ex.Message}";
+                return OperationResult<string>.Failure($"Error: {ex.Message}");
             }
         }
     }

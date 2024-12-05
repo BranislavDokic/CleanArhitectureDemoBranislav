@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces.Repositoryinterfaces;
+using Domain.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Application.Genres.GenresCommands.DeleteGenre
 {
-    public class DeleteGenreCommandHandler : IRequestHandler<DeleteGenreCommand, bool>
+    public class DeleteGenreCommandHandler : IRequestHandler<DeleteGenreCommand, OperationResult<bool>>
     {
         private readonly IGenericRepositoryInterface<Domain.Genre> _genreRepository;
 
@@ -17,21 +18,24 @@ namespace Application.Genres.GenresCommands.DeleteGenre
             _genreRepository = genreRepository;
         }
 
-        public async Task<bool> Handle(DeleteGenreCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<bool>> Handle(DeleteGenreCommand request, CancellationToken cancellationToken)
         {
             try
             {
-                var result = await _genreRepository.DeleteAsync(request.GenreId);
+                var genre = await _genreRepository.GetByIdAsync(request.GenreId);
 
-                return result == "Deleted";
-            }
-            catch (KeyNotFoundException ex)
-            {
-                throw new KeyNotFoundException($"Genre with ID {request.GenreId} not found.", ex);
+                if (genre == null)
+                {
+                    return OperationResult<bool>.Failure($"Genre with ID {request.GenreId} not found.");
+                }
+
+                await _genreRepository.DeleteAsync(request.GenreId);
+
+                return OperationResult<bool>.Success(true, "Genre successfully deleted.");
             }
             catch (Exception ex)
             {
-                throw new Exception("An error occurred while deleting the genre.", ex);
+                return OperationResult<bool>.Failure($"An unexpected error occurred: {ex.Message}");
             }
         }
 

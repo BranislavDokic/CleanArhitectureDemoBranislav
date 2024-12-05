@@ -1,6 +1,7 @@
 ﻿using Application.Dtos;
 using Application.Interfaces.Repositoryinterfaces;
 using Domain;
+using Domain.Result;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Application.Library.LibraryQuery.GetAllLibrary
 {
-    public class GetAllLibraryQueryHandler : IRequestHandler<GetAllLibraryQuery, List<LibraryDTO>>
+    public class GetAllLibraryQueryHandler : IRequestHandler<GetAllLibraryQuery, OperationResult<List<LibraryDTO>>>
     {
         private readonly IGenericRepositoryInterface<LibraryModel> _libraryRepository;
 
@@ -19,7 +20,7 @@ namespace Application.Library.LibraryQuery.GetAllLibrary
             _libraryRepository = libraryRepository;
         }
 
-        public async Task<List<LibraryDTO>> Handle(GetAllLibraryQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<List<LibraryDTO>>> Handle(GetAllLibraryQuery request, CancellationToken cancellationToken)
         {
             try
             {
@@ -27,16 +28,16 @@ namespace Application.Library.LibraryQuery.GetAllLibrary
 
                 if (libraries == null || !libraries.Any())
                 {
-                    return new List<LibraryDTO>();
+                    return OperationResult<List<LibraryDTO>>.Failure("No libraries found.");
                 }
 
                 var libraryDTOs = libraries.Select(library => new LibraryDTO(library)).ToList();
 
-                return libraryDTOs;
+                return OperationResult<List<LibraryDTO>>.Success(libraryDTOs, "Libraries retrieved successfully.");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw new Exception("Error fetching libraries");
+                return OperationResult<List<LibraryDTO>>.Failure($"An error occurred: {ex.Message}");
             }
         }
     }

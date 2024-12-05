@@ -1,10 +1,12 @@
-﻿using Application.Interfaces.Repositoryinterfaces;
+﻿using Application.Dtos;
+using Application.Interfaces.Repositoryinterfaces;
 using Domain;
+using Domain.Result;
 using MediatR;
 
 namespace Application.Authors.AuthorCommands.UpdateAuthor
 {
-    public class UpdateAuthorCommandHandler : IRequestHandler<UpdateAuthorCommand, bool>
+    public class UpdateAuthorCommandHandler : IRequestHandler<UpdateAuthorCommand, OperationResult<bool>>
     {
         private readonly IGenericRepositoryInterface<Author> _authorRepository;
         public UpdateAuthorCommandHandler(IGenericRepositoryInterface<Author> authorRepository)
@@ -12,7 +14,7 @@ namespace Application.Authors.AuthorCommands.UpdateAuthor
             _authorRepository = authorRepository;
         }
 
-        public async Task<bool> Handle(UpdateAuthorCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<bool>> Handle(UpdateAuthorCommand request, CancellationToken cancellationToken)
         {
             try
             {
@@ -20,7 +22,7 @@ namespace Application.Authors.AuthorCommands.UpdateAuthor
 
                 if (author == null)
                 {
-                    throw new KeyNotFoundException($"Author with ID {request.AuthorId} not found.");
+                    return OperationResult<bool>.Failure($"Author with ID {request.AuthorId} not found.");
                 }
 
                 author.Name = request.NewName ?? author.Name;
@@ -29,11 +31,11 @@ namespace Application.Authors.AuthorCommands.UpdateAuthor
 
                 await _authorRepository.UpdateAsync(request.AuthorId, author);
 
-                return true; 
+                return OperationResult<bool>.Success(true, $"{author} successfully updated.");
             }
-            catch
+            catch (Exception ex)
             {
-                throw new Exception("Author not updated");
+                return OperationResult<bool>.Failure($"An unexpected error occurred: {ex.Message}");
             }
         }
     }

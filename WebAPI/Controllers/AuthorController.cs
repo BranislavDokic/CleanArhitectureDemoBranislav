@@ -3,6 +3,7 @@ using Application.Authors.AuthorCommands.DeleteAuthor;
 using Application.Authors.AuthorCommands.UpdateAuthor;
 using Application.Authors.AuthorQueris.GetAllAuthors;
 using Application.Authors.AuthorQueris.GetAuthorById;
+using Application.Books.Commands.DeleteBook;
 using Application.Dtos;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -30,8 +31,14 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> GetAllAuthors()
         {
             var query = new GetAllAuthorsQuery();
-            var authors = await _mediator.Send(query);
-            return Ok(authors);
+            var result = await _mediator.Send(query);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
+            }
+
+            return Ok(new { message = result.Message, data = result.Data });
         }
 
         // GET api/<AuthorController>/5
@@ -39,17 +46,15 @@ namespace WebAPI.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetAuthorById(int id)
         {
-            try
-            {
-                var query = new GetAuthorByIdQuery(id);
-                var author = await _mediator.Send(query);
+            var query = new GetAuthorByIdQuery(id);
+            var result = await _mediator.Send(query);
 
-                return Ok(author);
-            }
-            catch (KeyNotFoundException ex)
+            if (!result.IsSuccess)
             {
-                return NotFound(ex.Message);
+                return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
             }
+
+            return Ok(new { message = result.Message, data = result.Data });
         }
 
         // POST api/<AuthorController>
@@ -64,24 +69,18 @@ namespace WebAPI.Controllers
 
             try
             {
-                var createdAuthors = await _mediator.Send(new CreateAuthorCommand(authorToAdd));
+                var result = await _mediator.Send(new CreateAuthorCommand(authorToAdd));
 
-                var newAuthor = createdAuthors.LastOrDefault();
-
-                if (newAuthor == null)
+                if (!result.IsSuccess)
                 {
-                    return StatusCode(500, "Author could not be added due to an unknown error.");
+                    return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
                 }
 
-                return Ok(new { Message = "User has been successfully added to the list.", Author = newAuthor });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new { Message = ex.Message });
+                return Ok(new { message = result.Message, data = result.Data });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Message = "An unexpected error occurred.", Details = ex.Message });
+                return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
             }
         }
 
@@ -99,16 +98,21 @@ namespace WebAPI.Controllers
             try
             {
                 var result = await _mediator.Send(new UpdateAuthorCommand(id, updatedAuthor.Name, updatedAuthor.Biography));
-                if (result)
+
+                if (!result.IsSuccess)
                 {
-                    return Ok($"Author with ID {id} was successfully updated.");
+                    return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
                 }
 
-                return BadRequest("Failed to update author.");
+                return Ok(new { message = result.Message });
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
             }
         }
 
@@ -120,16 +124,17 @@ namespace WebAPI.Controllers
             try
             {
                 var result = await _mediator.Send(new DeleteAuthorCommand(id));
-                if (result)
+
+                if (!result.IsSuccess)
                 {
-                    return Ok($"Author with ID {id} was successfully deleted.");
+                    return BadRequest(new { message = result.Message, errors = result.ErrorMessage, data = result.Data });
                 }
 
-                return BadRequest("Failed to delete author.");
+                return Ok(new { message = result.Message, data = result.Data });
             }
-            catch (KeyNotFoundException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
+                return StatusCode(500, new { Message = "An unexpected error occurred while deleting the author.", Details = ex.Message });
             }
         }
     }

@@ -6,10 +6,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Domain.Result;
 
 namespace Application.Books.Queries.GetBookById
 {
-    public class GetBookByIdQuery : IRequest<BookDTO>
+    public class GetBookByIdQuery : IRequest<OperationResult<BookDTO>>
     {
         public int Id { get; }
 
