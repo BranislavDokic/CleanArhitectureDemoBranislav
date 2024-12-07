@@ -19,27 +19,40 @@ namespace WebAPI.Controllers
     public class BookController : ControllerBase
     {
         private readonly IMediator _mediatr;
+        private readonly ILogger<BookController> _logger;
 
-        public BookController(IMediator mediatr)
+        public BookController(IMediator mediatr, ILogger<BookController> logger)
         {
             this._mediatr = mediatr;
+            _logger = logger;
         }
-
-
 
         // GET: api/<BookController>
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAllBooks()
         {
-            var query = new GetAllBooksQuery();
-            var result = await _mediatr.Send(query);
+            _logger.LogInformation("Fetching all books at {Time}", DateTime.Now);
 
-            if (!result.IsSuccess)
+            try
             {
-                return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
+                var query = new GetAllBooksQuery();
+                var result = await _mediatr.Send(query);
+
+                if (!result.IsSuccess)
+                {
+                    _logger.LogWarning("Failed to retrieve books: {ErrorMessage}", result.ErrorMessage);
+                    return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
+                }
+
+                _logger.LogInformation("Successfully retrieved {BookCount} books.", result.Data.Count);
+                return Ok(new { message = result.Message, data = result.Data });
             }
-            return Ok(new {message = result.Message, data  = result.Data});
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred while fetching books.");
+                return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
+            }
         }
 
         // GET api/<BookController>/5
@@ -47,15 +60,27 @@ namespace WebAPI.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetBookById(int id)
         {
-           var query = new GetBookByIdQuery(id);
-           var result = await _mediatr.Send(query);
+            _logger.LogInformation("Fetching book with ID: {BookId} at {Time}", id, DateTime.Now);
 
-           if (!result.IsSuccess)
-           {
-                return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
-           }
+            try
+            {
+                var query = new GetBookByIdQuery(id);
+                var result = await _mediatr.Send(query);
 
-           return Ok(new {message = result.Message, data = result.Data});
+                if (!result.IsSuccess)
+                {
+                    _logger.LogWarning("Failed to retrieve book with ID {BookId}: {ErrorMessage}", id, result.ErrorMessage);
+                    return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
+                }
+
+                _logger.LogInformation("Successfully retrieved book with ID: {BookId}", id);
+                return Ok(new { message = result.Message, data = result.Data });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred while fetching book with ID: {BookId}", id);
+                return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
+            }
         }
 
         // POST api/<BookController>
@@ -63,27 +88,32 @@ namespace WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateBook([FromBody] CreateBookDTO bookDTO)
         {
-            if (bookDTO == null)
-            {
-                return BadRequest("Book data is null");
-            }
-
-            var createBookCommand = new CreateBookCommand(bookDTO);
+            _logger.LogInformation("Start creating book at {Time}", DateTime.Now);
 
             try
             {
+                if (bookDTO == null)
+                {
+                    _logger.LogWarning("Invalid input: Book data is null.");
+                    return BadRequest("Book data is null");
+                }
+
+                var createBookCommand = new CreateBookCommand(bookDTO);
                 var result = await _mediatr.Send(createBookCommand);
 
                 if (!result.IsSuccess)
                 {
+                    _logger.LogWarning("Failed to create book: {ErrorMessage}", result.ErrorMessage);
                     return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
                 }
 
+                _logger.LogInformation("Successfully created book: {BookTitle}", bookDTO.Title);
                 return Ok(new { message = result.Message, data = result.Data });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Message = "An unexpected error occurred.", Details = ex.Message });
+                _logger.LogError(ex, "An unexpected error occurred while creating the book.");
+                return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
             }
         }
 
@@ -93,20 +123,32 @@ namespace WebAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateBook(int id, [FromBody] UpdateBookDTO updatedBook)
         {
-            if (updatedBook == null)
+            _logger.LogInformation("Start updating book with ID: {BookId} at {Time}", id, DateTime.Now);
+
+            try
             {
-                return BadRequest("Invalid book data.");
+                if (updatedBook == null)
+                {
+                    _logger.LogWarning("Invalid input: Book data is null.");
+                    return BadRequest("Invalid book data.");
+                }
+
+                var result = await _mediatr.Send(new UpdateBookCommand(id, updatedBook));
+
+                if (!result.IsSuccess)
+                {
+                    _logger.LogWarning("Failed to update book with ID {BookId}: {ErrorMessage}", id, result.ErrorMessage);
+                    return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
+                }
+
+                _logger.LogInformation("Successfully updated book with ID: {BookId}", id);
+                return Ok(new { message = result.Message, data = result.Data });
             }
-
-            var result = await _mediatr.Send(new UpdateBookCommand(id, updatedBook));
-
-            if (!result.IsSuccess)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
+                _logger.LogError(ex, "An unexpected error occurred while updating the book.");
+                return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
             }
-
-            return Ok(new { message = result.Message, data = result.Data });
-        
         }
 
         // DELETE api/<BookController>/5
@@ -114,6 +156,7 @@ namespace WebAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            _logger.LogInformation("Attempting to delete book with ID: {BookId} at {Time}", id, DateTime.Now);
 
             try
             {
@@ -121,14 +164,17 @@ namespace WebAPI.Controllers
 
                 if (!result.IsSuccess)
                 {
+                    _logger.LogWarning("Failed to delete book with ID {BookId}: {ErrorMessage}", id, result.ErrorMessage);
                     return BadRequest(new { message = result.Message, errors = result.ErrorMessage });
                 }
 
+                _logger.LogInformation("Successfully deleted book with ID: {BookId}", id);
                 return Ok(new { message = result.Message });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Message = "An unexpected error occurred.", Details = ex.Message });
+                _logger.LogError(ex, "An unexpected error occurred while deleting the book.");
+                return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
             }
         }
     }

@@ -3,6 +3,7 @@ using Infrastructure.Database;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure
 {
@@ -15,6 +16,7 @@ namespace Infrastructure
             {
                 options.UseSqlServer(connectionStrig);
             });
+
             services.AddScoped(typeof(IGenericRepositoryInterface<>), typeof(GenericRepository<>));
             return services;
         }

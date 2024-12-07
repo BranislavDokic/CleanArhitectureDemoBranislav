@@ -18,7 +18,6 @@ namespace Infrastructure.Database
         public DbSet<Genre> Genres { get; set; }
         public DbSet<User> Users { get; set; }
 
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
@@ -48,6 +47,7 @@ namespace Infrastructure.Database
                         j.HasKey(bg => new { bg.BookId, bg.GenreId });
                     });
 
+           
         }
     }
 }
