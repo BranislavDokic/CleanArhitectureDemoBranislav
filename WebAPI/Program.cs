@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
+
 namespace WebAPI
 {
     public class Program
@@ -83,6 +85,8 @@ namespace WebAPI
 
             builder.Services.AddApplication();
             builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+            
 
             var app = builder.Build();
 

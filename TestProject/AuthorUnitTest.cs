@@ -1,122 +1,230 @@
-﻿//using Application.Authors.AuthorCommands.CreateAuthor;
-//using Application.Authors.AuthorCommands.DeleteAuthor;
-//using Application.Authors.AuthorCommands.UpdateAuthor;
-//using Application.Authors.AuthorQueris.GetAllAuthors;
-//using Application.Authors.AuthorQueris.GetAuthorById;
-//using Application.Dtos;
-//using Domain;
-//using Infrastructure.Database;
-//using MediatR;
-//using Moq;
+﻿using Application.Authors.AuthorCommands.CreateAuthor;
+using Application.Authors.AuthorCommands.DeleteAuthor;
+using Application.Authors.AuthorCommands.UpdateAuthor;
+using Application.Authors.AuthorQueris.GetAllAuthors;
+using Application.Authors.AuthorQueris.GetAuthorById;
+using Application.Dtos;
+using Application.Interfaces.Repositoryinterfaces;
+using Domain;
+using Domain.Result;
+using FakeItEasy;
+using Infrastructure.Database;
+using MediatR;
+using Microsoft.Extensions.Logging;
+using System.Reflection.Metadata;
 
-//namespace TestProject;
+namespace TestProject;
 
-//public class AuthorUnitTest
-//{
-//    private FakeDatabas _fakeDatabase;
-//    private IMediator _mediator;
+public class AuthorUnitTest
+{
+    private IGenericRepositoryInterface<Author> _fakeRepository;
+    private IRequestHandler<CreateAuthorCommand, OperationResult<List<Author>>> _createHandler;
+    private IRequestHandler<DeleteAuthorCommand, OperationResult<bool>> _deleteHandler;
+    private IRequestHandler<UpdateAuthorCommand, OperationResult<bool>> _updateHandler;
+    private IRequestHandler<GetAllAuthorsQuery, OperationResult<List<Author>>> _getAllAuthors;
+    private IRequestHandler<GetAuthorByIdQuery, OperationResult<Author>> _getAuthorById;
+    private ILogger<CreateAuthorCommandHandler> _fakeLoggerCreate;
+    private ILogger<DeleteAuthorCommandHandler> _fakeLoggerDelete;
+    private ILogger<UpdateAuthorCommandHandler> _fakeLoggerUpdate;
+    private ILogger<GetAllAuthorsQueryHandler> _fakeLoggerGetAll;
+    private ILogger<GetAuthorByIdQueryHandler> _fakeLoggerGetById;
 
-//    [SetUp]
-//    public void Setup()
-//    {
-//        _fakeDatabase = new FakeDatabas();
-//        var mediatorMock = new Mock<IMediator>();
-//        _mediator = mediatorMock.Object;
-//    }
+    [SetUp]
+    public void Setup()
+    {
+        _fakeRepository = A.Fake<IGenericRepositoryInterface<Author>>();
 
-//    [Test]
-//    public void CreateAuthor_ShouldAddAuthorToList()
-//    {
-        
-//        _fakeDatabase.Authors.Clear();
+        _fakeLoggerCreate = A.Fake<ILogger<CreateAuthorCommandHandler>>();
+        _fakeLoggerDelete = A.Fake<ILogger<DeleteAuthorCommandHandler>>();
+        _fakeLoggerUpdate = A.Fake<ILogger<UpdateAuthorCommandHandler>>();
+        _fakeLoggerGetAll = A.Fake<ILogger<GetAllAuthorsQueryHandler>>();
+        _fakeLoggerGetById = A.Fake<ILogger<GetAuthorByIdQueryHandler>>();
 
-//        var newAuthor = new Author(1, "New Author", "New biography");
-//        var newAuthorDTO = new AuthorDTO(newAuthor);
-//        var createAuthorCommand = new CreateAuthorCommand(newAuthorDTO);
+        _createHandler = new CreateAuthorCommandHandler(_fakeRepository, _fakeLoggerCreate);
+        _deleteHandler = new DeleteAuthorCommandHandler(_fakeRepository, _fakeLoggerDelete);
+        _updateHandler = new UpdateAuthorCommandHandler(_fakeRepository, _fakeLoggerUpdate);
+        _getAllAuthors = new GetAllAuthorsQueryHandler(_fakeRepository, _fakeLoggerGetAll);
+        _getAuthorById = new GetAuthorByIdQueryHandler(_fakeRepository, _fakeLoggerGetById);
+    }
 
-//        var handler = new CreateAuthorCommandHandler(_fakeDatabase);
-//        handler.Handle(createAuthorCommand, default);
+    [Test]
+    public async Task Handle_ShouldAddAuthor_WhenAuthorDoesNotExist()
+    {
+        var newAuthorDto = new AuthorDTO
+        {
+            Name = "New Author",
+            Biography = "Biography"
+        };
+        var existingAuthors = new List<Author>();
+        A.CallTo(() => _fakeRepository.GetAllAsync()).Returns(Task.FromResult(existingAuthors));
 
-//        Assert.That(_fakeDatabase.Authors.Count, Is.EqualTo(1)); 
-//        Assert.That(_fakeDatabase.Authors[0].Name, Is.EqualTo("New Author")); 
-//    }
+        var command = new CreateAuthorCommand(newAuthorDto);
+        var result = await _createHandler.Handle(command, CancellationToken.None);
 
-//    [Test]
-//    public void DeleteAuthor_ShouldRemoveAuthorFromList()
-//    {
-        
-//        _fakeDatabase.Authors.Clear();
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual("Author successfully created.", result.Message);
+        A.CallTo(() => _fakeRepository.AddAsync(A<Author>._)).MustHaveHappenedOnceExactly();
+    }
 
-//        var authorToDelete = new Author(1, "Author to Delete", "Biography");
-//        _fakeDatabase.Authors.Add(authorToDelete);
+    [Test]
+    public async Task Handle_ShouldReturnFailure_WhenAuthorAlreadyExists()
+    {
+        var existingAuthor = new Author { Name = "Existing Author", Biography = "Existing Bio" };
+        var existingAuthors = new List<Author> { existingAuthor };
+        A.CallTo(() => _fakeRepository.GetAllAsync()).Returns(Task.FromResult(existingAuthors));
 
-//        var deleteAuthorCommand = new DeleteAuthorCommand(1);
-//        var handler = new DeleteAuthorCommandHandler(_fakeDatabase);
-//        handler.Handle(deleteAuthorCommand, default);
+        var duplicateAuthorDto = new AuthorDTO
+        {
+            Name = existingAuthor.Name,
+            Biography = "Different Bio"
+        };
 
-//        Assert.That(_fakeDatabase.Authors.Count, Is.EqualTo(0));
-//    }
+        var command = new CreateAuthorCommand(duplicateAuthorDto);
+        var result = await _createHandler.Handle(command, CancellationToken.None);
 
-//    [Test]
-//    public void UpdateAuthor_ShouldModifyAuthorDetails()
-//    {
-//        var originalAuthor = new Author(1, "Original Name", "Original Biography");
-//        _fakeDatabase.Authors.Add(originalAuthor);
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual($"Author with the name '{duplicateAuthorDto.Name}' already exists.", result.ErrorMessage);
+        A.CallTo(() => _fakeRepository.AddAsync(A<Author>._)).MustNotHaveHappened();
+    }
 
-//        var updateAuthorCommand = new UpdateAuthorCommand(1, "Updated Name", "Updated Biography");  
-//        var handler = new UpdateAuthorCommandHandler(_fakeDatabase);
+    [Test]
+    public async Task Handle_ShouldReturnSuccess_WhenAuthorExists()
+    {
+        var authorId = 1;
+        var existingAuthor = new Author { Id = authorId, Name = "Test Author" };
 
-//        handler.Handle(updateAuthorCommand, default);
+        A.CallTo(() => _fakeRepository.GetByIdAsync(authorId, null)).Returns(Task.FromResult(existingAuthor));
 
-//        var updatedAuthor = _fakeDatabase.Authors.Find(a => a.Id == 1);
-//        Assert.That(updatedAuthor.Name, Is.EqualTo("Updated Name"));
-//        Assert.That(updatedAuthor.Biography, Is.EqualTo("Updated Biography"));
-//    }
+        A.CallTo(() => _fakeRepository.DeleteAsync(authorId)).Returns(Task.FromResult("Delete successful"));
 
-//    [Test]
-//    public async Task GetAllAuthors_ShouldReturnAllAuthors()
-//    {
-//        var fakeDatabase = new FakeDatabas();  
+        var command = new DeleteAuthorCommand(authorId);
 
-//        fakeDatabase.Authors.Clear();
+        var result = await _deleteHandler.Handle(command, CancellationToken.None);
 
-//        fakeDatabase.Authors.Add(new Author(1, "Author 1", "Biography 1"));
-//        fakeDatabase.Authors.Add(new Author(2, "Author 2", "Biography 2"));
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual("Author successfully deleted.", result.Message);
 
-//        var getAllAuthorsQuery = new GetAllAuthorsQuery();
-//        var handler = new GetAllAuthorsQueryHandler(fakeDatabase);
+        A.CallTo(() => _fakeRepository.DeleteAsync(authorId)).MustHaveHappenedOnceExactly();
+    }
 
-//        var authors = await handler.Handle(getAllAuthorsQuery, default);
+    [Test]
+    public async Task Handle_ShouldReturnFailure_WhenAuthorNotFound()
+    {
+        var authorId = 1;
 
-//        Assert.That(authors.Count, Is.EqualTo(2));
-//        Assert.That(authors.Any(a => a.Name == "Author 1"), Is.True);
-//        Assert.That(authors.Any(a => a.Name == "Author 2"), Is.True);
-//    }
+        A.CallTo(() => _fakeRepository.GetByIdAsync(authorId, null)).Returns(Task.FromResult<Author>(null));
 
-//    [Test]
-//    public async Task GetAuthorById_ShouldReturnCorrectAuthor()
-//    {
+        var command = new DeleteAuthorCommand(authorId);
 
-//        var author = new Author(4, "Author 4", "Biography 4");  
-//        _fakeDatabase.Authors.Add(author);
+        var result = await _deleteHandler.Handle(command, CancellationToken.None);
 
-//        var getAuthorByIdQuery = new GetAuthorByIdQuery(4);  
-//        var handler = new GetAuthorByIdQueryHandler(_fakeDatabase);
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual($"Author with ID {authorId} not found.", result.ErrorMessage); 
 
-//        var result = await handler.Handle(getAuthorByIdQuery, default);
+        A.CallTo(() => _fakeRepository.DeleteAsync(authorId)).MustNotHaveHappened();
+    }
 
-//        Assert.That(result.Name, Is.EqualTo("Author 4"));
-//        Assert.That(result.Biography, Is.EqualTo("Biography 4"));
-//    }
+    [Test]
+    public async Task Handle_ShouldUpdateAuthor_WhenAuthorExists()
+    {
+        var authorId = 1;
+        var existingAuthor = new Author { Id = authorId, Name = "Old Name", Biography = "Old Bio" };
+        A.CallTo(() => _fakeRepository.GetByIdAsync(authorId, null)).Returns(Task.FromResult(existingAuthor));
 
-//    [Test]
-//    public async Task GetAuthorById_ShouldThrowKeyNotFoundException_WhenAuthorDoesNotExist()
-//    {
-//        var nonExistentAuthorId = 999;
-//        var getAuthorByIdQuery = new GetAuthorByIdQuery(nonExistentAuthorId);
-//        var handler = new GetAuthorByIdQueryHandler(_fakeDatabase);
-//        var ex = Assert.ThrowsAsync<KeyNotFoundException>(() => handler.Handle(getAuthorByIdQuery, default));
+        var updateCommand = new UpdateAuthorCommand(authorId, "New Name", "New Bio");
 
-//        Assert.That(ex.Message, Is.EqualTo($"Author with ID {nonExistentAuthorId} was not found."));
-//    }
-//}
+        var result = await _updateHandler.Handle(updateCommand, CancellationToken.None);
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual("Author successfully updated.", result.Message); 
+
+        A.CallTo(() => _fakeRepository.UpdateAsync(authorId, A<Author>.That.Matches(a => a.Name == "New Name" && a.Biography == "New Bio"))).MustHaveHappenedOnceExactly();
+    }
+
+    [Test]
+    public async Task Handle_ShouldReturnFailure_WhenAuthorNotFound_ForUpdate()
+    {
+        var authorId = 1;
+
+        A.CallTo(() => _fakeRepository.GetByIdAsync(authorId, null)).Returns(Task.FromResult<Author>(null));
+
+        var updateCommand = new UpdateAuthorCommand(authorId, "New Name", "New Bio");
+
+        var result = await _updateHandler.Handle(updateCommand, CancellationToken.None);
+
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual("Operation failed", result.Message); 
+
+        A.CallTo(() => _fakeRepository.UpdateAsync(authorId, A<Author>._)).MustNotHaveHappened();
+    }
+
+    [Test]
+    public async Task Handle_ShouldReturnSuccess_WhenAuthorsExist()
+    {
+        var authors = new List<Author>
+            {
+                new Author { Id = 1, Name = "Author 1", Biography = "Biography 1" },
+                new Author { Id = 2, Name = "Author 2", Biography = "Biography 2" }
+            };
+
+        A.CallTo(() => _fakeRepository.GetAllAsync()).Returns(Task.FromResult(authors));
+
+        var query = new GetAllAuthorsQuery();
+
+        var result = await _getAllAuthors.Handle(query, CancellationToken.None);
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual("Authors retrieved successfully.", result.Message);
+        Assert.AreEqual(2, result.Data.Count);
+        Assert.AreEqual("Author 1", result.Data[0].Name);
+        Assert.AreEqual("Author 2", result.Data[1].Name);
+    }
+
+    [Test]
+    public async Task Handle_ShouldReturnFailure_WhenNoAuthorsFound()
+    {
+        A.CallTo(() => _fakeRepository.GetAllAsync()).Returns(Task.FromResult(new List<Author>()));
+
+        var query = new GetAllAuthorsQuery();
+
+        var result = await _getAllAuthors.Handle(query, CancellationToken.None);
+
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual("Operation failed", result.Message);
+    }
+
+    [Test]
+    public async Task Handle_ShouldReturnSuccess_WhenAuthorFound()
+    {
+        var authorId = 1; 
+        var author = new Author { Id = authorId, Name = "John Doe" }; 
+
+        A.CallTo(() => _fakeRepository.GetByIdAsync(authorId, null)).Returns(Task.FromResult(author));
+
+        var query = new GetAuthorByIdQuery(authorId);
+
+        var result = await _getAuthorById.Handle(query, CancellationToken.None);
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual($"Successfully returned author by Id {authorId}", result.Message);
+        Assert.AreEqual(author, result.Data);
+    }
+
+    [Test]
+    public async Task Handle_ShouldReturnFailure_WhenAuthorNotFoundWithThatId()
+    {
+        var authorId = 999;  
+
+        A.CallTo(() => _fakeRepository.GetByIdAsync(authorId, null)).Returns(Task.FromResult<Author>(null));
+
+        var query = new GetAuthorByIdQuery(authorId);  
+
+        var result = await _getAuthorById.Handle(query, CancellationToken.None);
+
+        Assert.IsFalse(result.IsSuccess);  
+        Assert.AreEqual($"Failure to return author by Id {authorId}", result.ErrorMessage); 
+    }
+
+
+
+}
