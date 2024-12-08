@@ -3,11 +3,7 @@ using Domain;
 using Domain.Result;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Application.Genres.GenresCommands.UpdateGenre
 {
@@ -40,7 +36,7 @@ namespace Application.Genres.GenresCommands.UpdateGenre
                 await _genreRepository.UpdateAsync(request.GenreId, genre);
 
                 _logger.LogInformation("Genre with ID {GenreId} successfully updated to {NewName}.", request.GenreId, request.NewName);
-                return OperationResult<string>.Success("Genre updated successfully.");
+                return OperationResult<string>.Success($"Genre with Name {request.NewName} successfully updated");
             }
             catch (Exception ex)
             {

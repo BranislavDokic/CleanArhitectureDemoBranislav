@@ -1,5 +1,4 @@
-﻿using Application.Dtos;
-using Application.Interfaces.Repositoryinterfaces;
+﻿using Application.Interfaces.Repositoryinterfaces;
 using Domain;
 using Domain.Result;
 using MediatR;

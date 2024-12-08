@@ -1,5 +1,5 @@
-﻿using Application.Books.Commands.CreateBook;
-using Application.Interfaces.Repositoryinterfaces;
+﻿using Application.Interfaces.Repositoryinterfaces;
+using Application.Users.UserQueris.UserLogin.Helpers;
 using Domain;
 using Domain.Result;
 using MediatR;
@@ -21,36 +21,42 @@ namespace Application.Users.UserCommand
 
         public async Task<OperationResult<User>> Handle(AddNewUserCommand request, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Attempting to add a new user with username: {Username}", request.NewUser.UserName);
+            _logger.LogInformation("Attempting to create new user with username: {Username}", request.NewUser.UserName);
 
             try
             {
-                var existingUsers = await _userRepository.GetAllAsync();
-
-                var userAlreadyExists = existingUsers.FirstOrDefault(u => u.UserName.Equals(request.NewUser.UserName, StringComparison.OrdinalIgnoreCase));
-
-                if (userAlreadyExists != null)
+                if (string.IsNullOrEmpty(request.NewUser.UserName))
                 {
-                    _logger.LogWarning("Username '{Username}' is already taken.", request.NewUser.UserName);
-                    return OperationResult<User>.Failure($"Username '{request.NewUser.UserName}' is already taken.", "Failed to add the user.");
+                    _logger.LogWarning("Username is null or empty.");
+                    return OperationResult<User>.Failure("Username cannot be null or empty.", "User creation failed");
                 }
 
-                var userToAdd = new User
+                var existingUser = await _userRepository.GetAllAsync();
+
+                if (existingUser.Any(u => u.UserName == request.NewUser.UserName))
+                {
+                    _logger.LogWarning("Username {Username} is already taken.", request.NewUser.UserName);
+                    return OperationResult<User>.Failure("Username is already taken", "User creation failed");
+                }
+
+                var hashedPassword = PasswordHelper.HashPassword(request.NewUser.Password);
+
+                var user = new User
                 {
                     Id = Guid.NewGuid(),
                     UserName = request.NewUser.UserName,
-                    Password = request.NewUser.Password
+                    PasswordHash = hashedPassword
                 };
 
-                await _userRepository.AddAsync(userToAdd);
+                await _userRepository.AddAsync(user);
 
-                _logger.LogInformation("User '{Username}' has been successfully added.", request.NewUser.UserName);
-                return OperationResult<User>.Success(userToAdd, "User has been successfully added.");
+                _logger.LogInformation("User '{Username}' created successfully.", request.NewUser.UserName);
+                return OperationResult<User>.Success(user, "User created successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while adding the user: {Username}", request.NewUser.UserName);
-                return OperationResult<User>.Failure($"An error occurred: {ex.Message}", "Failed to add the user.");
+                _logger.LogError(ex, "An error occurred while creating user: {Username}", request.NewUser.UserName);
+                return OperationResult<User>.Failure($"An error occurred: {ex.Message}", "User creation failed");
             }
         }
     }

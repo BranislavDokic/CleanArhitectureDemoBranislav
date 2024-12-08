@@ -4,15 +4,11 @@ using Domain;
 using Domain.Result;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Application.Genres.GenresQuery.GetAllGenre
 {
-    internal class GetAllGenreQueryHandler : IRequestHandler<GetAllGenreQuery, OperationResult<List<GenreDTO>>>
+    public class GetAllGenreQueryHandler : IRequestHandler<GetAllGenreQuery, OperationResult<List<GenreDTO>>>
     {
         private readonly IGenericRepositoryInterface<Genre> _genreRepository;
         private readonly ILogger<GetAllGenreQueryHandler> _logger;
@@ -49,7 +45,7 @@ namespace Application.Genres.GenresQuery.GetAllGenre
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while retrieving genres.");
-                return OperationResult<List<GenreDTO>>.Failure($"Error: {ex.Message}");
+                return OperationResult<List<GenreDTO>>.Failure(ex.Message);
             }
         }
     }

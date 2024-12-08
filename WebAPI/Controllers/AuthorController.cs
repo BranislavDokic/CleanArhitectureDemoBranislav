@@ -30,6 +30,7 @@ namespace WebAPI.Controllers
 
         // GET: api/<AuthorController>
         [Authorize]
+        [ResponseCache (CacheProfileName = "DefaultCache")]
         [HttpGet]
         public async Task<IActionResult> GetAllAuthors()
         {
@@ -62,6 +63,13 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> GetAuthorById(int id)
         {
             _logger.LogInformation("Fetching author with ID: {AuthorId} at {Time}", id, DateTime.Now);
+
+            if (id <= 0)
+            {
+                ModelState.AddModelError("Id", "Författarens ID måste vara större än 0.");
+                return BadRequest(ModelState); 
+            }
+
             try
             { 
                 var query = new GetAuthorByIdQuery(id);

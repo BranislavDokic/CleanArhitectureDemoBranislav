@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Users.UserQueris.GetAllUsers
 {
-    internal sealed class GetAllUsersQuerihandler : IRequestHandler<GetAllUsersQueri, OperationResult<List<User>>>
+    public sealed class GetAllUsersQuerihandler : IRequestHandler<GetAllUsersQueri, OperationResult<List<User>>>
     {
         private readonly IGenericRepositoryInterface<User> _userRepository;
         private readonly ILogger<GetAllUsersQuerihandler> _logger;

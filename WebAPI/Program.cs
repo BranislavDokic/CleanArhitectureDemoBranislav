@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI
 {
@@ -78,7 +79,15 @@ namespace WebAPI
                 });
             });
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers(options =>
+            {
+                options.CacheProfiles.Add("DefaultCache",
+                    new CacheProfile()
+                    {
+                        Duration = 60,
+                        Location = ResponseCacheLocation.Any
+                    });
+            });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();

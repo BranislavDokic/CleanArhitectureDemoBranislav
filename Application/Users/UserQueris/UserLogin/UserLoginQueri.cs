@@ -1,5 +1,4 @@
 ﻿using Application.Dtos;
-using Domain;
 using Domain.Result;
 using MediatR;
 namespace Application.Users.UserQueris.UserLogin

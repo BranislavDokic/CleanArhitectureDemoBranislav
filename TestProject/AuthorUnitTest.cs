@@ -10,6 +10,7 @@ using Domain.Result;
 using FakeItEasy;
 using Infrastructure.Database;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System.Reflection.Metadata;
 
@@ -33,6 +34,7 @@ public class AuthorUnitTest
     public void Setup()
     {
         _fakeRepository = A.Fake<IGenericRepositoryInterface<Author>>();
+        var fakeMemoryCache = A.Fake<IMemoryCache>();
 
         _fakeLoggerCreate = A.Fake<ILogger<CreateAuthorCommandHandler>>();
         _fakeLoggerDelete = A.Fake<ILogger<DeleteAuthorCommandHandler>>();
@@ -43,7 +45,7 @@ public class AuthorUnitTest
         _createHandler = new CreateAuthorCommandHandler(_fakeRepository, _fakeLoggerCreate);
         _deleteHandler = new DeleteAuthorCommandHandler(_fakeRepository, _fakeLoggerDelete);
         _updateHandler = new UpdateAuthorCommandHandler(_fakeRepository, _fakeLoggerUpdate);
-        _getAllAuthors = new GetAllAuthorsQueryHandler(_fakeRepository, _fakeLoggerGetAll);
+        _getAllAuthors = new GetAllAuthorsQueryHandler(_fakeRepository, _fakeLoggerGetAll, fakeMemoryCache);
         _getAuthorById = new GetAuthorByIdQueryHandler(_fakeRepository, _fakeLoggerGetById);
     }
 
@@ -62,7 +64,7 @@ public class AuthorUnitTest
         var result = await _createHandler.Handle(command, CancellationToken.None);
 
         Assert.IsTrue(result.IsSuccess);
-        Assert.AreEqual("Author successfully created.", result.Message);
+        Assert.AreEqual("Författare skapad.", result.Message);
         A.CallTo(() => _fakeRepository.AddAsync(A<Author>._)).MustHaveHappenedOnceExactly();
     }
 
@@ -83,7 +85,7 @@ public class AuthorUnitTest
         var result = await _createHandler.Handle(command, CancellationToken.None);
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.AreEqual($"Author with the name '{duplicateAuthorDto.Name}' already exists.", result.ErrorMessage);
+        Assert.AreEqual($"Författare med namnet '{duplicateAuthorDto.Name}' finns redan.", result.ErrorMessage);
         A.CallTo(() => _fakeRepository.AddAsync(A<Author>._)).MustNotHaveHappened();
     }
 
@@ -119,7 +121,7 @@ public class AuthorUnitTest
         var result = await _deleteHandler.Handle(command, CancellationToken.None);
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.AreEqual($"Author with ID {authorId} not found.", result.ErrorMessage); 
+        Assert.AreEqual($"Author with ID {authorId} not found.", result.ErrorMessage);
 
         A.CallTo(() => _fakeRepository.DeleteAsync(authorId)).MustNotHaveHappened();
     }
@@ -136,7 +138,7 @@ public class AuthorUnitTest
         var result = await _updateHandler.Handle(updateCommand, CancellationToken.None);
 
         Assert.IsTrue(result.IsSuccess);
-        Assert.AreEqual("Author successfully updated.", result.Message); 
+        Assert.AreEqual("Author successfully updated.", result.Message);
 
         A.CallTo(() => _fakeRepository.UpdateAsync(authorId, A<Author>.That.Matches(a => a.Name == "New Name" && a.Biography == "New Bio"))).MustHaveHappenedOnceExactly();
     }
@@ -153,7 +155,7 @@ public class AuthorUnitTest
         var result = await _updateHandler.Handle(updateCommand, CancellationToken.None);
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.AreEqual("Operation failed", result.Message); 
+        Assert.AreEqual("Operation failed", result.Message);
 
         A.CallTo(() => _fakeRepository.UpdateAsync(authorId, A<Author>._)).MustNotHaveHappened();
     }
@@ -196,8 +198,8 @@ public class AuthorUnitTest
     [Test]
     public async Task Handle_ShouldReturnSuccess_WhenAuthorFound()
     {
-        var authorId = 1; 
-        var author = new Author { Id = authorId, Name = "John Doe" }; 
+        var authorId = 1;
+        var author = new Author { Id = authorId, Name = "John Doe" };
 
         A.CallTo(() => _fakeRepository.GetByIdAsync(authorId, null)).Returns(Task.FromResult(author));
 
@@ -213,16 +215,16 @@ public class AuthorUnitTest
     [Test]
     public async Task Handle_ShouldReturnFailure_WhenAuthorNotFoundWithThatId()
     {
-        var authorId = 999;  
+        var authorId = 999;
 
         A.CallTo(() => _fakeRepository.GetByIdAsync(authorId, null)).Returns(Task.FromResult<Author>(null));
 
-        var query = new GetAuthorByIdQuery(authorId);  
+        var query = new GetAuthorByIdQuery(authorId);
 
         var result = await _getAuthorById.Handle(query, CancellationToken.None);
 
-        Assert.IsFalse(result.IsSuccess);  
-        Assert.AreEqual($"Failure to return author by Id {authorId}", result.ErrorMessage); 
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual($"Failure to return author by Id {authorId}", result.ErrorMessage);
     }
 
 
