@@ -11,11 +11,13 @@ namespace Application.Authors.AuthorCommands.DeleteAuthor
     {
         private readonly IGenericRepositoryInterface<Author> _authorRepository;
         private readonly ILogger<DeleteAuthorCommandHandler> _logger;
+       
 
         public DeleteAuthorCommandHandler(IGenericRepositoryInterface<Author> authorRepository, ILogger<DeleteAuthorCommandHandler> logger)
         {
             _authorRepository = authorRepository;
             _logger = logger;
+            
         }
         public async Task<OperationResult<bool>> Handle(DeleteAuthorCommand request, CancellationToken cancellationToken)
         {

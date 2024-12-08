@@ -1,8 +1,6 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Application.Users.UserQueris.GetAllUsers;
-using Domain;
 using Application.Dtos;
 using Application.Users.UserCommand;
 using Application.Users.UserQueris.UserLogin;

@@ -20,5 +20,7 @@ namespace Application.Dtos
             Id = genre.Id;
             Name = genre.Name;
         }
+
+       
     }
 }

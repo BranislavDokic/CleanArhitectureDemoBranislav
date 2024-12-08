@@ -27,9 +27,9 @@ namespace Application.Users.UserQueris.UserLogin
             {
                 var users = await _userRepository.GetAllAsync();
 
-                var foundUser = users.FirstOrDefault(u => u.UserName == request.LoginUser.UserName && u.Password == request.LoginUser.Password);
+                var foundUser = users.FirstOrDefault(u => u.UserName == request.LoginUser.UserName);
 
-                if (foundUser == null)
+                if (foundUser == null || !PasswordHelper.VerifyPassword(foundUser.PasswordHash, request.LoginUser.Password))
                 {
                     _logger.LogWarning("Login failed for username: {Username}. Invalid username or password.", request.LoginUser.UserName);
                     return OperationResult<string>.Failure("Invalid username or password", "Login failed");
@@ -43,7 +43,7 @@ namespace Application.Users.UserQueris.UserLogin
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while logging in user: {Username}", request.LoginUser.UserName);
-                return OperationResult<string>.Failure($"An error occurred: {ex.Message}", "Login failed");
+                return OperationResult<string>.Failure($"An error occurred: An error occurred while logging in user: {request.LoginUser.UserName}", "Login failed");
             }
         }
     }

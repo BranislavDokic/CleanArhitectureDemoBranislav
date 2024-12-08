@@ -11,16 +11,30 @@ namespace Application.Authors.AuthorCommands.CreateAuthor
     {
         private readonly IGenericRepositoryInterface<Author> _genericRepository;
         private readonly ILogger<CreateAuthorCommandHandler> _logger;
+       
 
         public CreateAuthorCommandHandler(IGenericRepositoryInterface<Author> genericRepository, ILogger<CreateAuthorCommandHandler> logger)
         {
             _genericRepository = genericRepository;
             _logger = logger;
+           
         }
 
         public async Task<OperationResult<List<Author>>> Handle(CreateAuthorCommand request, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Attempting to create a new author: {AuthorName}", request.NewAuthor.Name);
+            _logger.LogInformation("Försöker skapa en ny författare: {AuthorName}", request.NewAuthor.Name);
+
+            if (string.IsNullOrEmpty(request.NewAuthor.Name))
+            {
+                _logger.LogWarning("Författarnamn får inte vara tomt.");
+                return OperationResult<List<Author>>.Failure("Författarnamn får inte vara tomt.");
+            }
+
+            if (string.IsNullOrEmpty(request.NewAuthor.Biography))
+            {
+                _logger.LogWarning("Författarbiografi får inte vara tom.");
+                return OperationResult<List<Author>>.Failure("Författarbiografi får inte vara tom.");
+            }
 
             try
             {
@@ -29,8 +43,8 @@ namespace Application.Authors.AuthorCommands.CreateAuthor
 
                 if (authorAlreadyExists != null)
                 {
-                    _logger.LogWarning("Author with the name '{AuthorName}' already exists.", request.NewAuthor.Name);
-                    return OperationResult<List<Author>>.Failure($"Author with the name '{request.NewAuthor.Name}' already exists.");
+                    _logger.LogWarning("Författare med namnet '{AuthorName}' finns redan.", request.NewAuthor.Name);
+                    return OperationResult<List<Author>>.Failure($"Författare med namnet '{request.NewAuthor.Name}' finns redan.");
                 }
 
                 var author = new Author
@@ -42,13 +56,13 @@ namespace Application.Authors.AuthorCommands.CreateAuthor
                 await _genericRepository.AddAsync(author);
 
                 var allAuthors = await _genericRepository.GetAllAsync();
-                _logger.LogInformation("Author '{AuthorName}' successfully created.", request.NewAuthor.Name);
-                return OperationResult<List<Author>>.Success(allAuthors, "Author successfully created.");
+                _logger.LogInformation("Författaren '{AuthorName}' skapades framgångsrikt.", request.NewAuthor.Name);
+                return OperationResult<List<Author>>.Success(allAuthors, "Författare skapad.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while creating the author: {AuthorName}", request.NewAuthor.Name);
-                return OperationResult<List<Author>>.Failure($"An error occurred while creating the author: {ex.Message}");
+                _logger.LogError(ex, "Ett fel inträffade när författaren skulle skapas: {AuthorName}", request.NewAuthor.Name);
+                return OperationResult<List<Author>>.Failure($"Ett fel inträffade när författaren skulle skapas: {ex.Message}");
             }
         }
     }
