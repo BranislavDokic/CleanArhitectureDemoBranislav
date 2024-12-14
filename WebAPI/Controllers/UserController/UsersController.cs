@@ -4,6 +4,7 @@ using Application.Users.UserQueris.GetAllUsers;
 using Application.Dtos;
 using Application.Users.UserCommand;
 using Application.Users.UserQueris.UserLogin;
+using Microsoft.AspNetCore.Identity;
 
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -16,11 +17,13 @@ namespace WebAPI.Controllers.UserController
     {
         private readonly IMediator _mediatr;
         private readonly ILogger<UsersController> _logger;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public UsersController(IMediator mediatr, ILogger<UsersController> logger)
+        public UsersController(IMediator mediatr, ILogger<UsersController> logger, RoleManager<IdentityRole> roleManager)
         {
             _mediatr = mediatr;
             _logger = logger;
+            _roleManager = roleManager;
         }
 
         // GET: api/<UsersController>
@@ -72,16 +75,33 @@ namespace WebAPI.Controllers.UserController
                     return BadRequest("UserName and Password cannot be empty or whitespace.");
                 }
 
-                var result = await _mediatr.Send(new AddNewUserCommand(userToAdd));
-
-                if (result.IsSuccess)
+                _logger.LogInformation("Checking if role {Role} exists.", userToAdd.Role);
+                if (!await _roleManager.RoleExistsAsync(userToAdd.Role))
                 {
-                    _logger.LogInformation("Successfully registered new user with UserName: {UserName}", userToAdd.UserName);
-                    return Ok(new { Message = result.Message, User = result.Data });
+                    _logger.LogInformation("Role {Role} does not exist, creating it.", userToAdd.Role);
+                    var createRoleResult = await _roleManager.CreateAsync(new IdentityRole(userToAdd.Role));
+                    if (!createRoleResult.Succeeded)
+                    {
+                        _logger.LogWarning("Failed to create role: {ErrorMessage}", string.Join(", ", createRoleResult.Errors.Select(e => e.Description)));
+                        return BadRequest("Failed to create role.");
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation("Role {Role} already exists.", userToAdd.Role);
                 }
 
-                _logger.LogWarning("Failed to register user: {ErrorMessage}", result.ErrorMessage);
-                return BadRequest(new { Message = result.Message, Errors = result.ErrorMessage });
+                _logger.LogInformation("Attempting to add new user with UserName: {UserName} and Role: {Role}", userToAdd.UserName, userToAdd.Role);
+                var userResult = await _mediatr.Send(new AddNewUserCommand(userToAdd));
+
+                if (userResult.IsSuccess)
+                {
+                    _logger.LogInformation("Successfully registered new user with UserName: {UserName}", userToAdd.UserName);
+                    return Ok(new { Message = userResult.Message, User = userResult.Data });
+                }
+
+                _logger.LogWarning("Failed to register user: {ErrorMessage}", userResult.ErrorMessage);
+                return BadRequest(new { Message = userResult.Message, Errors = userResult.ErrorMessage });
             }
             catch (Exception ex)
             {

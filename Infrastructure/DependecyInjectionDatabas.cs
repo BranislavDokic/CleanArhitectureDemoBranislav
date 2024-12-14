@@ -1,6 +1,8 @@
 ﻿using Application.Interfaces.Repositoryinterfaces;
+using Domain;
 using Infrastructure.Database;
 using Infrastructure.Repositories;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,6 +19,9 @@ namespace Infrastructure
             });
 
             services.AddScoped(typeof(IGenericRepositoryInterface<>), typeof(GenericRepository<>));
+            services.AddScoped<IUserRepositoryInterface, UserRepository>();
+            services.AddIdentityCore<User>().AddRoles<IdentityRole>().AddEntityFrameworkStores<RealDatabase>();
+
             return services;
         }
     }
