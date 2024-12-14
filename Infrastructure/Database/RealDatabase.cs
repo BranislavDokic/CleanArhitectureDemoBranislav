@@ -1,10 +1,12 @@
 ﻿using Domain;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 
 namespace Infrastructure.Database
 {
-    public class RealDatabase : DbContext
+    public class RealDatabase : IdentityDbContext<User, IdentityRole, string>
     {
         public RealDatabase(DbContextOptions<RealDatabase> options) : base(options) { }
         public DbSet<Author> Authors { get; set; }
