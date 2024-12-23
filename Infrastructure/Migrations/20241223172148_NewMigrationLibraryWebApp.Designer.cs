@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(RealDatabase))]
-    [Migration("20241214170706_UpdateSchema")]
-    partial class UpdateSchema
+    [Migration("20241223172148_NewMigrationLibraryWebApp")]
+    partial class NewMigrationLibraryWebApp
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

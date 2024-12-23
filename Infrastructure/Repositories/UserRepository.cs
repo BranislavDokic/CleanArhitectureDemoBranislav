@@ -23,22 +23,33 @@ namespace Infrastructure.Repositories
             _roleManager = roleManager;
         }
 
-        public async Task<IdentityResult> AddAsync(User userToRegister)
+        public async Task<IdentityResult> AddAsync(User userToRegister, string password)
         {
+            if (string.IsNullOrEmpty(userToRegister.Role))
+            {
+                userToRegister.Role = "Admin";  // Sätt "Admin" som standardroll om ingen roll skickas
+            }
+
+            // Kontrollera om rollen existerar, annars skapa den
             if (!await _roleManager.RoleExistsAsync(userToRegister.Role))
             {
                 await _roleManager.CreateAsync(new IdentityRole(userToRegister.Role));
             }
-            try
+
+            // Skapa användaren
+            var result = await _userManager.CreateAsync(userToRegister, password);
+
+            // Om användaren skapades framgångsrikt, tilldela rollen
+            if (result.Succeeded)
             {
-                var userCreated = await _userManager.CreateAsync(userToRegister);
-                await _userManager.AddToRoleAsync(userToRegister, userToRegister.Role);
-                return await Task.FromResult(userCreated);
+                var roleResult = await _userManager.AddToRoleAsync(userToRegister, userToRegister.Role);
+                if (!roleResult.Succeeded)
+                {
+                    return IdentityResult.Failed(roleResult.Errors.ToArray());
+                }
             }
-            catch (ArgumentException e)
-            {
-                throw new ArgumentException($"Failed to add user: {e.Message}");
-            }
+
+            return result;
         }
 
         public async Task<List<User>> GetAllAsync()
