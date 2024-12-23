@@ -10,7 +10,7 @@ namespace Application.Interfaces.Repositoryinterfaces
 {
     public interface IUserRepositoryInterface
     {
-        Task<IdentityResult> AddAsync(User userToRegister);
+        Task<IdentityResult> AddAsync(User userToRegister, string password);
         Task<List<User>> GetAllAsync();
         Task<User> GetByIdAsync(Guid id, Func<IQueryable<User>, IQueryable<User>> include = null);
         Task<string> DeleteAsync(Guid id); 

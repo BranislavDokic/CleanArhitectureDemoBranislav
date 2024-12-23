@@ -105,7 +105,7 @@ namespace WebAPI
                 var context = services.GetRequiredService<RealDatabase>();
 
 
-                SeedDatabas.Initialize(services, context);
+                //SeedDatabas.Initialize(services, context);
             }
 
             // Configure the HTTP request pipeline.

@@ -13,11 +13,12 @@ namespace Application.Users.UserCommand
     {
         private readonly UserManager<User> _userManager;
         private readonly ILogger<AddNewUserCommandhandler> _logger;
-
-        public AddNewUserCommandhandler(UserManager<User> userManager, ILogger<AddNewUserCommandhandler> logger)
+        private readonly IUserRepositoryInterface _userRepository;
+        public AddNewUserCommandhandler(UserManager<User> userManager, ILogger<AddNewUserCommandhandler> logger, IUserRepositoryInterface userRepository)
         {
             _userManager = userManager;
             _logger = logger;
+            _userRepository = userRepository;
         }
 
         public async Task<OperationResult<IdentityResult>> Handle(AddNewUserCommand request, CancellationToken cancellationToken)
@@ -32,8 +33,7 @@ namespace Application.Users.UserCommand
                     return OperationResult<IdentityResult>.Failure("Username cannot be null or empty.", "User creation failed");
                 }
 
-                var existingUser = await _userManager.FindByNameAsync(request.NewUser.UserName);
-
+                var existingUser = await _userRepository.GetUserByUsernameAsync(request.NewUser.UserName);
                 if (existingUser != null)
                 {
                     _logger.LogWarning("Username {Username} is already taken.", request.NewUser.UserName);
@@ -42,31 +42,15 @@ namespace Application.Users.UserCommand
 
                 var user = new User
                 {
-                    UserName = request.NewUser.UserName
+                    UserName = request.NewUser.UserName,
+                    Role = request.NewUser.Role // Set the role from the request
                 };
 
-                var result = await _userManager.CreateAsync(user, request.NewUser.Password);
+                var result = await _userRepository.AddAsync(user, request.NewUser.Password);
 
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User '{Username}' created successfully.", request.NewUser.UserName);
-
-                    if (!string.IsNullOrEmpty(request.NewUser.Role))
-                    {
-                        var roleResult = await _userManager.AddToRoleAsync(user, request.NewUser.Role);
-
-                        if (!roleResult.Succeeded)
-                        {
-                            _logger.LogWarning("Failed to assign role '{Role}' to user '{Username}': {Errors}",
-                                request.NewUser.Role, request.NewUser.UserName, string.Join(", ", roleResult.Errors.Select(e => e.Description)));
-                            return OperationResult<IdentityResult>.Failure("User created, but failed to assign role.",
-                                string.Join(", ", roleResult.Errors.Select(e => e.Description)));
-                        }
-
-                        _logger.LogInformation("Role '{Role}' assigned to user '{Username}' successfully.",
-                            request.NewUser.Role, request.NewUser.UserName);
-                    }
-
                     return OperationResult<IdentityResult>.Success(result, "User created successfully");
                 }
                 else
